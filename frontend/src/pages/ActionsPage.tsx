@@ -13,58 +13,66 @@ export default function ActionsPage({ city }: { city: string }) {
   }, [city]);
 
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <h2 className="mb-1 text-xl font-semibold text-slate-100">Enforcement action queue</h2>
-      <p className="mb-4 text-sm text-slate-400">
-        Ranked by share × severity × persistence × exposure × actionability. Click a row for its evidence pack.
-      </p>
-      {loading ? (
-        <p className="text-slate-500">Loading…</p>
-      ) : actions.length === 0 ? (
-        <p className="text-slate-500">No active hotspots (AQI &gt; 200) in the current snapshot.</p>
-      ) : (
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-slate-800 text-left text-slate-400">
-              <th className="p-2">#</th><th className="p-2">Locality</th><th className="p-2">Source</th>
-              <th className="p-2">Share</th><th className="p-2">Conf.</th><th className="p-2">AQI</th>
-              <th className="p-2">Score</th><th className="p-2">Evidence</th>
-            </tr>
-          </thead>
-          <tbody>
-            {actions.map((a) => (
-              <tr key={a.id} className="border-b border-slate-900 hover:bg-slate-900/50">
-                <td className="p-2 text-slate-500">{a.id}</td>
-                <td className="p-2 font-medium text-slate-100">{a.locality}</td>
-                <td className="p-2">
-                  <span className="rounded px-2 py-0.5 text-xs text-white"
-                        style={{ backgroundColor: SOURCE_COLOR[a.source] ?? "#64748b" }}>
-                    {a.source}
-                  </span>
-                </td>
-                <td className="p-2 text-slate-300">{Math.round(a.share * 100)}%</td>
-                <td className="p-2">
-                  <span className="rounded-full px-2 py-0.5 text-xs text-white"
-                        style={{ backgroundColor: CONFIDENCE_COLOR[a.confidence] ?? "#64748b" }}>
-                    {a.confidence}
-                  </span>
-                </td>
-                <td className="p-2 font-semibold" style={{ color: aqiColor(a.aqi) }}>{a.aqi}</td>
-                <td className="p-2">
-                  <div className="h-2 w-24 rounded bg-slate-800">
-                    <div className="h-2 rounded bg-sky-500"
-                         style={{ width: `${Math.min(100, a.score * 400)}%` }} />
-                  </div>
-                </td>
-                <td className="p-2">
-                  <a href={api.evidenceUrl(city, a.id)} target="_blank" rel="noreferrer"
-                     className="text-sky-400 hover:underline">Open →</a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+    <div className="h-full overflow-y-auto p-8">
+      <div className="mx-auto max-w-5xl">
+        <h2 className="mb-1 text-xl font-semibold tracking-tight text-slate-900">
+          Enforcement action queue
+        </h2>
+        <p className="mb-6 text-sm text-slate-500">
+          Ranked by share × severity × persistence × exposure × actionability. Click a row for its evidence pack.
+        </p>
+        {loading ? (
+          <p className="text-slate-400">Loading…</p>
+        ) : actions.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-400 shadow-sm">
+            No active hotspots (AQI &gt; 200) in the current snapshot.
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/70 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <th className="p-3">#</th><th className="p-3">Locality</th><th className="p-3">Source</th>
+                  <th className="p-3">Share</th><th className="p-3">Conf.</th><th className="p-3">AQI</th>
+                  <th className="p-3">Score</th><th className="p-3">Evidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {actions.map((a) => (
+                  <tr key={a.id} className="border-b border-slate-100 transition last:border-0 hover:bg-sky-50/40">
+                    <td className="p-3 text-slate-400">{a.id}</td>
+                    <td className="p-3 font-semibold text-slate-800">{a.locality}</td>
+                    <td className="p-3">
+                      <span className="rounded-md px-2 py-0.5 text-xs font-medium text-white"
+                            style={{ backgroundColor: SOURCE_COLOR[a.source] ?? "#64748b" }}>
+                        {a.source}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-600">{Math.round(a.share * 100)}%</td>
+                    <td className="p-3">
+                      <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
+                            style={{ backgroundColor: CONFIDENCE_COLOR[a.confidence] ?? "#64748b" }}>
+                        {a.confidence}
+                      </span>
+                    </td>
+                    <td className="p-3 font-bold" style={{ color: aqiColor(a.aqi) }}>{a.aqi}</td>
+                    <td className="p-3">
+                      <div className="h-2 w-24 rounded-full bg-slate-100">
+                        <div className="h-2 rounded-full bg-sky-500"
+                             style={{ width: `${Math.min(100, a.score * 400)}%` }} />
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <a href={api.evidenceUrl(city, a.id)} target="_blank" rel="noreferrer"
+                         className="font-medium text-sky-600 hover:text-sky-500 hover:underline">Open →</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

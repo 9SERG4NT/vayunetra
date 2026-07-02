@@ -78,7 +78,7 @@ export default function CommandPage({ city, cityInfo }: { city: string; cityInfo
         </div>
         <button
           onClick={() => setShowFires((s) => !s)}
-          className="absolute bottom-3 left-3 z-10 rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200"
+          className="absolute bottom-3 left-3 z-10 rounded-xl border border-slate-200/80 bg-white/85 px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-lg shadow-slate-900/5 backdrop-blur-md transition hover:text-sky-700"
         >
           {showFires ? "Hide fires" : "Show fires"}
         </button>
@@ -87,7 +87,7 @@ export default function CommandPage({ city, cityInfo }: { city: string; cityInfo
       {selected ? (
         <HexPanel city={city} hex={selected} action={selectedAction} onClose={() => setSelected(null)} />
       ) : (
-        <div className="flex h-full items-center justify-center border-l border-slate-800 bg-slate-950 p-6 text-center text-sm text-slate-500">
+        <div className="flex h-full items-center justify-center border-l border-slate-200 bg-white p-8 text-center text-sm leading-relaxed text-slate-400">
           Click a hex on the map to see its forecast, source attribution and advisory.
         </div>
       )}
@@ -101,10 +101,10 @@ function Legend() {
     ["Poor", "#f97316"], ["Very Poor", "#dc2626"], ["Severe", "#7f1d1d"],
   ];
   return (
-    <div className="absolute bottom-3 right-3 z-10 rounded-lg border border-slate-700 bg-slate-900/80 p-2 text-xs">
+    <div className="absolute bottom-3 right-3 z-10 rounded-xl border border-slate-200/80 bg-white/85 p-2.5 text-xs shadow-lg shadow-slate-900/5 backdrop-blur-md">
       {bands.map(([label, color]) => (
-        <div key={label} className="flex items-center gap-2 text-slate-200">
-          <span className="inline-block h-3 w-3 rounded-sm" style={{ backgroundColor: color }} />
+        <div key={label} className="flex items-center gap-2 py-px font-medium text-slate-600">
+          <span className="inline-block h-3 w-3 rounded" style={{ backgroundColor: color }} />
           {label}
         </div>
       ))}

@@ -3,7 +3,7 @@ import maplibregl from "maplibre-gl";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
 import { ScatterplotLayer } from "@deck.gl/layers";
-import { CARTO_DARK, aqiRgba } from "../theme";
+import { BASEMAP_STYLE, aqiRgba } from "../theme";
 import type { CityInfo, FireDot, GridCell, Station } from "../types";
 
 interface Props {
@@ -29,7 +29,7 @@ export default function MapView({ city, cells, fires, stations, showFires, onSel
     if (!container.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: container.current,
-      style: CARTO_DARK,
+      style: BASEMAP_STYLE,
       center: bboxCenter(city.bbox),
       zoom: 9.4,
       attributionControl: { compact: true },

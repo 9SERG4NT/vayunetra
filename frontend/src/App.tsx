@@ -28,14 +28,18 @@ export default function App() {
   const cityInfo = cities.find((c) => c.id === city);
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `px-3 py-1.5 text-sm font-medium rounded-md ${isActive ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"}`;
+    `px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+      isActive ? "bg-sky-50 text-sky-700" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+    }`;
 
   return (
-    <div className="flex h-full flex-col bg-slate-950">
-      <header className="flex items-center gap-4 border-b border-slate-800 px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-sky-400">VayuNetra</span>
-          <span className="hidden text-xs text-slate-500 sm:inline">Urban Air Quality Intelligence</span>
+    <div className="flex h-full flex-col bg-slate-50">
+      <header className="flex items-center gap-5 border-b border-slate-200 bg-white px-5 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="flex items-baseline gap-2.5">
+          <span className="text-lg font-bold tracking-tight text-sky-600">VayuNetra</span>
+          <span className="hidden text-xs font-medium text-slate-400 sm:inline">
+            Urban Air Quality Intelligence
+          </span>
         </div>
         <nav className="flex gap-1">
           <NavLink to="/" end className={navClass}>Command</NavLink>

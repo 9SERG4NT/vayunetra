@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -12,12 +12,18 @@ body,
 }
 
 body {
-  background-color: #020617; /* slate-950 */
-  color: #e2e8f0; /* slate-200 */
+  background-color: #f8fafc; /* slate-50 */
+  color: #0f172a; /* slate-900 */
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* MapLibre canvas should fill its container. */
 .maplibregl-map {
   font-family: inherit;
+}
+
+/* Softer range slider */
+input[type="range"] {
+  height: 4px;
 }

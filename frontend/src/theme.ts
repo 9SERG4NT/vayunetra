@@ -45,4 +45,5 @@ export const SOURCE_COLOR: Record<string, string> = {
   background: "#94a3b8",
 };
 
-export const CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+// Light basemap for the white theme (keyless; © OpenStreetMap © CARTO).
+export const BASEMAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
