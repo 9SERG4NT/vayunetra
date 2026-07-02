@@ -1,0 +1,7 @@
+# Normalize line endings to LF for text sources (keeps Makefile tabs/LF intact).
+* text=auto eol=lf
+*.png binary
+*.gz binary
+*.parquet binary
+*.tif binary
+Makefile text eol=lf
