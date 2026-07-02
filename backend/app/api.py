@@ -174,6 +174,23 @@ def advisory(city: str, hex_id: str, lang: str = Query(default="en")):
     return generate_advisory(city, hex_id, lang)
 
 
+@router.get("/vulnerability/{city}")
+def vulnerability(city: str):
+    """Schools + hospitals point locations (OSM) for the vulnerability map layer."""
+    deps.validate_city(city)
+    out: dict[str, list[dict]] = {}
+    for layer in ("schools", "hospitals"):
+        data = deps.read_json(deps.geo_file(city, f"osm_{layer}.geojson"))
+        pts = []
+        for feat in data.get("features", []):
+            geom = feat.get("geometry") or {}
+            if geom.get("type") == "Point":
+                lng, lat = geom["coordinates"][:2]
+                pts.append({"lat": lat, "lng": lng})
+        out[layer] = pts
+    return out
+
+
 @router.get("/stations/{city}")
 def stations(city: str):
     deps.validate_city(city)

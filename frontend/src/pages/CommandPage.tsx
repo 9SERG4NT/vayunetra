@@ -4,7 +4,7 @@ import TimeScrubber from "../components/TimeScrubber";
 import HexPanel from "../components/HexPanel";
 import { api } from "../api";
 import type {
-  ActionItem, CityInfo, FireDot, GridCell, ReplayPreset, Station,
+  ActionItem, CityInfo, FireDot, GridCell, ReplayPreset, Station, Vulnerability,
 } from "../types";
 
 export default function CommandPage({ city, cityInfo }: { city: string; cityInfo?: CityInfo }) {
@@ -15,8 +15,10 @@ export default function CommandPage({ city, cityInfo }: { city: string; cityInfo
   const [fires, setFires] = useState<FireDot[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
   const [actions, setActions] = useState<ActionItem[]>([]);
+  const [vulnerability, setVulnerability] = useState<Vulnerability | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [showFires, setShowFires] = useState(true);
+  const [showVuln, setShowVuln] = useState(false);
   const debounce = useRef<number | undefined>(undefined);
 
   // Load per-city static data.
@@ -29,6 +31,7 @@ export default function CommandPage({ city, cityInfo }: { city: string; cityInfo
     });
     api.stations(city).then(setStations).catch(() => setStations([]));
     api.actions(city).then((a) => setActions(a.actions)).catch(() => setActions([]));
+    api.vulnerability(city).then(setVulnerability).catch(() => setVulnerability(null));
   }, [city]);
 
   // Debounced grid + fires refetch when the scrubber moves.
@@ -64,7 +67,9 @@ export default function CommandPage({ city, cityInfo }: { city: string; cityInfo
           cells={cells}
           fires={fires}
           stations={stations}
+          vulnerability={vulnerability}
           showFires={showFires}
+          showVulnerability={showVuln}
           onSelectHex={setSelected}
         />
         <div className="absolute left-3 top-3 z-10 w-[420px] max-w-[70vw]">
@@ -76,13 +81,29 @@ export default function CommandPage({ city, cityInfo }: { city: string; cityInfo
             onPreset={onPreset}
           />
         </div>
-        <button
-          onClick={() => setShowFires((s) => !s)}
-          className="absolute bottom-3 left-3 z-10 rounded-xl border border-slate-200/80 bg-white/85 px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-lg shadow-slate-900/5 backdrop-blur-md transition hover:text-sky-700"
-        >
-          {showFires ? "Hide fires" : "Show fires"}
-        </button>
-        <Legend />
+        <div className="absolute bottom-3 left-3 z-10 flex gap-2">
+          <button
+            onClick={() => setShowFires((s) => !s)}
+            className={`rounded-xl border px-3.5 py-1.5 text-xs font-medium shadow-lg shadow-slate-900/5 backdrop-blur-md transition ${
+              showFires
+                ? "border-orange-200 bg-orange-50/90 text-orange-700"
+                : "border-slate-200/80 bg-white/85 text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            🔥 Fires
+          </button>
+          <button
+            onClick={() => setShowVuln((s) => !s)}
+            className={`rounded-xl border px-3.5 py-1.5 text-xs font-medium shadow-lg shadow-slate-900/5 backdrop-blur-md transition ${
+              showVuln
+                ? "border-violet-200 bg-violet-50/90 text-violet-700"
+                : "border-slate-200/80 bg-white/85 text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            🏥 Vulnerability
+          </button>
+        </div>
+        <Legend showVuln={showVuln} />
       </div>
       {selected ? (
         <HexPanel city={city} hex={selected} action={selectedAction} onClose={() => setSelected(null)} />
@@ -95,7 +116,7 @@ export default function CommandPage({ city, cityInfo }: { city: string; cityInfo
   );
 }
 
-function Legend() {
+function Legend({ showVuln }: { showVuln: boolean }) {
   const bands = [
     ["Good", "#16a34a"], ["Satisfactory", "#84cc16"], ["Moderate", "#eab308"],
     ["Poor", "#f97316"], ["Very Poor", "#dc2626"], ["Severe", "#7f1d1d"],
@@ -108,6 +129,18 @@ function Legend() {
           {label}
         </div>
       ))}
+      {showVuln && (
+        <div className="mt-1.5 border-t border-slate-200 pt-1.5">
+          <div className="flex items-center gap-2 py-px font-medium text-slate-600">
+            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#8b5cf6" }} />
+            Schools
+          </div>
+          <div className="flex items-center gap-2 py-px font-medium text-slate-600">
+            <span className="inline-block h-3 w-3 rounded-full ring-1 ring-white" style={{ backgroundColor: "#e11d48" }} />
+            Hospitals
+          </div>
+        </div>
+      )}
     </div>
   );
 }

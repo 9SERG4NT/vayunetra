@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import type { Metrics } from "../types";
+import type { CityInfo, Metrics } from "../types";
+
+interface CityMetrics {
+  id: string;
+  name: string;
+  metrics: Metrics | null;
+}
 
 function rmse(m: Metrics, h: string, method: string): string {
   const cell = m.horizons?.[h]?.[method];
@@ -18,10 +24,24 @@ function skill(m: Metrics, h: string): string {
 
 export default function MetricsPage({ city }: { city: string }) {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [compare, setCompare] = useState<CityMetrics[]>([]);
 
   useEffect(() => {
     api.metrics(city).then(setMetrics).catch(() => setMetrics(null));
   }, [city]);
+
+  // Multi-city comparative strip: fetch every city's metrics once.
+  useEffect(() => {
+    api.cities().then((cs: CityInfo[]) =>
+      Promise.all(
+        cs.map((c) =>
+          api.metrics(c.id)
+            .then((m) => ({ id: c.id, name: c.name, metrics: m }))
+            .catch(() => ({ id: c.id, name: c.name, metrics: null }))
+        )
+      ).then(setCompare)
+    );
+  }, []);
 
   if (!metrics || !metrics.horizons) {
     return <div className="p-8 text-slate-400">No metrics yet — run <code>make evaluate</code>.</div>;
@@ -36,6 +56,51 @@ export default function MetricsPage({ city }: { city: string }) {
         <p className="mb-6 text-sm text-slate-500">
           Rolling-origin backtest (4 × 2-week folds). RMSE/MAE in µg/m³ (pm25). Skill = 1 − RMSE_model/RMSE_persistence.
         </p>
+
+        {compare.length > 1 && (
+          <div className="mb-6">
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Multi-city comparison
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {compare.map((c) => {
+                const m = c.metrics;
+                const covC = (m?.coverage ?? {}) as Record<string, unknown>;
+                const active = c.id === city;
+                return (
+                  <div
+                    key={c.id}
+                    className={`rounded-2xl border bg-white p-4 shadow-sm transition ${
+                      active ? "border-sky-300 ring-2 ring-sky-100" : "border-slate-200"
+                    }`}
+                  >
+                    <div className="mb-2 flex items-baseline justify-between">
+                      <span className="font-semibold text-slate-800">{c.name}</span>
+                      {active && <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-500">viewing</span>}
+                    </div>
+                    {m?.horizons ? (
+                      <>
+                        <div className="mb-2 flex gap-2">
+                          {horizons.map((h) => (
+                            <div key={h} className="flex-1 rounded-xl bg-slate-50 px-2 py-1.5 text-center">
+                              <div className="text-[10px] font-medium uppercase text-slate-400">{h}h skill</div>
+                              <div className="text-sm font-bold text-emerald-600">{skill(m, h)}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {String(covC.stations ?? "—")} stations · {String(covC.pm25_rows ?? "—")} pm25 rows
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-slate-400">No metrics for this city yet.</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <table className="w-full border-collapse text-sm">

@@ -120,3 +120,13 @@ export interface Station {
   lat: number;
   lng: number;
 }
+
+export interface VulnPoint {
+  lat: number;
+  lng: number;
+}
+
+export interface Vulnerability {
+  schools: VulnPoint[];
+  hospitals: VulnPoint[];
+}

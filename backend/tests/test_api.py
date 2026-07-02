@@ -38,3 +38,12 @@ def test_grid_endpoint_ok():
 def test_grap_delhi_shape():
     r = client.get("/api/grap/delhi")
     assert r.status_code == 200
+
+
+def test_vulnerability_shape():
+    r = client.get("/api/vulnerability/delhi")
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body) == {"schools", "hospitals"}
+    for layer in body.values():
+        assert isinstance(layer, list)

@@ -4,14 +4,16 @@ import { MapboxOverlay } from "@deck.gl/mapbox";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
 import { ScatterplotLayer } from "@deck.gl/layers";
 import { BASEMAP_STYLE, aqiRgba } from "../theme";
-import type { CityInfo, FireDot, GridCell, Station } from "../types";
+import type { CityInfo, FireDot, GridCell, Station, Vulnerability, VulnPoint } from "../types";
 
 interface Props {
   city: CityInfo;
   cells: GridCell[];
   fires: FireDot[];
   stations: Station[];
+  vulnerability: Vulnerability | null;
   showFires: boolean;
+  showVulnerability: boolean;
   onSelectHex: (hex: string) => void;
 }
 
@@ -19,7 +21,9 @@ function bboxCenter(bbox: [number, number, number, number]): [number, number] {
   return [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2];
 }
 
-export default function MapView({ city, cells, fires, stations, showFires, onSelectHex }: Props) {
+export default function MapView({
+  city, cells, fires, stations, vulnerability, showFires, showVulnerability, onSelectHex,
+}: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
@@ -88,9 +92,30 @@ export default function MapView({ city, cells, fires, stations, showFires, onSel
         radiusUnits: "pixels",
         pickable: false,
       }),
+      new ScatterplotLayer<VulnPoint>({
+        id: "vuln-schools",
+        data: showVulnerability ? vulnerability?.schools ?? [] : [],
+        getPosition: (d) => [d.lng, d.lat],
+        getFillColor: [139, 92, 246, 190], // violet — schools
+        getRadius: 2.5,
+        radiusUnits: "pixels",
+        pickable: false,
+      }),
+      new ScatterplotLayer<VulnPoint>({
+        id: "vuln-hospitals",
+        data: showVulnerability ? vulnerability?.hospitals ?? [] : [],
+        getPosition: (d) => [d.lng, d.lat],
+        getFillColor: [225, 29, 72, 210], // rose — hospitals
+        getLineColor: [255, 255, 255, 220],
+        lineWidthMinPixels: 1,
+        stroked: true,
+        getRadius: 4,
+        radiusUnits: "pixels",
+        pickable: false,
+      }),
     ];
     overlayRef.current.setProps({ layers });
-  }, [cells, fires, stations, showFires, onSelectHex]);
+  }, [cells, fires, stations, vulnerability, showFires, showVulnerability, onSelectHex]);
 
   return <div ref={container} className="h-full w-full" />;
 }

@@ -1,6 +1,7 @@
 import type {
   ActionsResponse, Advisory, AttributionResponse, CityInfo, FireDot,
   ForecastResponse, GrapStatus, GridResponse, Metrics, Station, Timeline,
+  Vulnerability,
 } from "./types";
 
 const BASE = "/api";
@@ -22,6 +23,7 @@ export const api = {
   fires: (city: string, t?: string, windowH = 24) =>
     get<FireDot[]>(`/fires/${city}?window_h=${windowH}${t ? `&t=${encodeURIComponent(t)}` : ""}`),
   stations: (city: string) => get<Station[]>(`/stations/${city}`),
+  vulnerability: (city: string) => get<Vulnerability>(`/vulnerability/${city}`),
   actions: (city: string) => get<ActionsResponse>(`/actions/${city}`),
   advisory: (city: string, hex: string, lang: string) =>
     get<Advisory>(`/advisory/${city}/${hex}?lang=${lang}`),
