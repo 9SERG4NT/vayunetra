@@ -11,7 +11,12 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 import time
+from pathlib import Path
+
+# Allow `python scripts/run_pipeline.py` to import the `backend` package.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 log = logging.getLogger("vayunetra.pipeline")
 
@@ -97,12 +102,20 @@ _DISPATCH = {
 }
 
 
+def stage_validate(cities: list[str]) -> None:
+    from backend.models.event_study import run_all as event_run
+
+    event_run(cities)
+
+
 def run_all(cities: list[str]) -> None:
     for stage in STAGES:
         log.info("=== stage: %s ===", stage)
         t0 = time.time()
         _DISPATCH[stage](cities)
         log.info("stage %s done in %.1fs", stage, time.time() - t0)
+    log.info("=== stage: validate (event study + latency) ===")
+    stage_validate(cities)
 
 
 def refresh_live() -> None:
