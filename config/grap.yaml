@@ -1,0 +1,35 @@
+# Graded Response Action Plan (Delhi-NCR, CAQM). Stage from AQI band.
+# Stage I:  201-300  |  Stage II: 301-400  |  Stage III: 401-450  |  Stage IV: >450
+stages:
+  - stage: 1
+    label: "Stage I — Poor (AQI 201-300)"
+    aqi_lo: 201
+    aqi_hi: 300
+    actions:
+      - "Mechanized road sweeping and daily water sprinkling on identified dust hotspots"
+      - "Strict enforcement of C&D dust-control norms (covering, sprinkling at sites)"
+      - "Intensify PUC (Pollution Under Control) certificate enforcement drives"
+  - stage: 2
+    label: "Stage II — Very Poor (AQI 301-400)"
+    aqi_lo: 301
+    aqi_hi: 400
+    actions:
+      - "Ban use of coal / firewood and tandoors in hotels and open eateries"
+      - "Restrict / regulate diesel generator-set operation to essential services"
+      - "Raise parking fees to disincentivize private-vehicle use; augment public transport"
+  - stage: 3
+    label: "Stage III — Severe (AQI 401-450)"
+    aqi_lo: 401
+    aqi_hi: 450
+    actions:
+      - "Halt non-essential construction and demolition activity"
+      - "Close brick kilns, stone crushers and mining operations in NCR"
+      - "Restrict BS-III petrol and BS-IV diesel light motor vehicles"
+  - stage: 4
+    label: "Stage IV — Severe+ (AQI >450)"
+    aqi_lo: 451
+    aqi_hi: 9999
+    actions:
+      - "Ban entry of non-essential trucks into the city"
+      - "Advise 50% work-from-home for government and private offices"
+      - "Consider closure / hybrid mode for schools and colleges"

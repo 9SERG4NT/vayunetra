@@ -1,0 +1,15 @@
+# CPCB National AQI (NAQI) sub-index breakpoints.
+# Each row: [C_lo, C_hi, I_lo, I_hi]  (concentration µg/m³ -> sub-index)
+# Sub-index by linear interpolation:  I = I_lo + (I_hi - I_lo) * (C - C_lo) / (C_hi - C_lo)
+# Final AQI = max sub-index across pollutants, clamped 0..500.
+pm25: [[0, 30, 0, 50], [31, 60, 51, 100], [61, 90, 101, 200], [91, 120, 201, 300], [121, 250, 301, 400], [251, 500, 401, 500]]
+pm10: [[0, 50, 0, 50], [51, 100, 51, 100], [101, 250, 101, 200], [251, 350, 201, 300], [351, 430, 301, 400], [431, 600, 401, 500]]
+no2:  [[0, 40, 0, 50], [41, 80, 51, 100], [81, 180, 101, 200], [181, 280, 201, 300], [281, 400, 301, 400], [401, 600, 401, 500]]
+
+categories:
+  - {lo: 0,   hi: 50,  label: "Good",         color: "#16a34a"}
+  - {lo: 51,  hi: 100, label: "Satisfactory", color: "#84cc16"}
+  - {lo: 101, hi: 200, label: "Moderate",     color: "#eab308"}
+  - {lo: 201, hi: 300, label: "Poor",         color: "#f97316"}
+  - {lo: 301, hi: 400, label: "Very Poor",    color: "#dc2626"}
+  - {lo: 401, hi: 500, label: "Severe",       color: "#7f1d1d"}

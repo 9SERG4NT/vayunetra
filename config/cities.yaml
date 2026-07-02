@@ -1,0 +1,22 @@
+delhi:
+  name: "Delhi NCT"
+  bbox: [76.84, 28.40, 77.35, 28.90]        # W,S,E,N — primary spatial truth; no shapefile needed
+  fires_bbox: [73.5, 27.5, 79.0, 32.5]      # upwind stubble corridor (Punjab/Haryana)
+  fire_radius_km: 300
+  h3_res: 8
+  timezone: "Asia/Kolkata"
+  grap: true
+  idw_max_radius_km: 15
+  replay_presets:
+    - {id: diwali_2024, label: "Diwali 2024 replay", start: "2024-10-30", end: "2024-11-03"}   # only if history covers it; else auto-hide
+    - {id: stubble_2025, label: "Stubble episode",   start: "2025-11-01", end: "2025-11-15"}
+pune:
+  name: "Pune + PCMC"
+  bbox: [73.68, 18.40, 74.05, 18.75]
+  fires_bbox: [72.5, 17.5, 75.5, 20.0]
+  fire_radius_km: 120
+  h3_res: 8
+  timezone: "Asia/Kolkata"
+  grap: false
+  idw_max_radius_km: 12
+  replay_presets: []
