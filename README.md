@@ -37,6 +37,14 @@ make demo                     # API on :8000, UI on :5173
 Open http://localhost:5173. The UI runs fully offline from `data/snapshots/` — no live
 keys are needed at demo time.
 
+**Windows without `make`?** Use the bundled cross-platform runner (same targets):
+```bash
+uv run python tasks.py setup
+uv run python tasks.py pipeline          # or a single stage: data / features / train / ...
+uv run python tasks.py api               # + `uv run python tasks.py ui` in a second terminal
+uv run python tasks.py test
+```
+
 ### Required keys (both free, ~2 min each)
 | Key | Where | Used for |
 |---|---|---|
