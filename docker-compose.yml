@@ -1,0 +1,18 @@
+# Optional local stack: API + nginx-served frontend.
+# Run the data pipeline first (make pipeline) so data/snapshots is populated.
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data:ro
+    environment:
+      - LIVE_MODE=0
+
+  web:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
