@@ -8,6 +8,7 @@ attribution, actions, pipeline, api, ui, demo, test, snapshot.
 """
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -18,8 +19,10 @@ PIPELINE_STAGES = {"geo", "data", "features", "train", "evaluate", "predict",
 
 
 def sh(cmd: list[str], cwd: Path | None = None) -> int:
+    # Resolve the executable (npm/npx/node are .cmd shims on Windows).
+    resolved = shutil.which(cmd[0]) or cmd[0]
     print(f"$ {' '.join(cmd)}")
-    return subprocess.run(cmd, cwd=str(cwd or ROOT)).returncode
+    return subprocess.run([resolved, *cmd[1:]], cwd=str(cwd or ROOT)).returncode
 
 
 def main() -> int:
