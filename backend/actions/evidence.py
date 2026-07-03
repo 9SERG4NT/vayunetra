@@ -89,10 +89,16 @@ def _map_png(city: str, hex_id: str, lat: float, lng: float) -> str:
     ax.scatter([lng], [lat], marker="*", c="#dc2626", s=160, label="hotspot", zorder=4)
     ax.set_title("Location & evidence map")
     ax.set_xlabel("lon"); ax.set_ylabel("lat"); ax.legend(fontsize=7, loc="upper right")
+    # Bound the extent to the city bbox (+small margin) so the basemap fetches few tiles
+    # instead of zooming out to the ~300 km fire radius (which was ~15 s of tile downloads).
+    w, s, e, n = city_config(city)["bbox"]
+    mx, my = (e - w) * 0.08, (n - s) * 0.08
+    ax.set_xlim(w - mx, e + mx); ax.set_ylim(s - my, n + my)
     try:
         import contextily as cx
-        ax.set_xlim(*ax.get_xlim()); ax.set_ylim(*ax.get_ylim())
-        cx.add_basemap(ax, crs="EPSG:4326", source=cx.providers.CartoDB.Positron, attribution_size=5)
+        # zoom=10 keeps the whole city to a handful of tiles (fast) while staying legible.
+        cx.add_basemap(ax, crs="EPSG:4326", source=cx.providers.CartoDB.Positron,
+                       attribution_size=5, zoom=10)
     except Exception as exc:  # noqa: BLE001 - basemap is best-effort
         ax.text(0.02, 0.02, "(basemap unavailable)", transform=ax.transAxes, fontsize=6, color="#888")
         log.debug("basemap failed: %s", exc)

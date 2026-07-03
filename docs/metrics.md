@@ -27,3 +27,10 @@ Coverage: 19 stations (16 reference), 114026 pm25 rows, range 2025-03-31 19:00:0
 ## Evidence-pack latency (signal → evidence)
 
 - **delhi**: p50 1767 ms, p90 7858 ms (n=5, target < 30000 ms).
+
+## Triangulation cross-check — biomass Method M vs Method A
+
+On each city's highest-fire attribution day, fraction of high-biomass hexes where the model counterfactual (M) and attribution arithmetic (A) agree within 50%.
+
+- **delhi**: 82.0% agreement over 2863 hexes (day 2025-11-11, efficacy_mid 0.5).
+- **pune**: no high-biomass hexes on the replay day (low-fire snapshot).

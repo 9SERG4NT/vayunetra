@@ -99,8 +99,87 @@ def run_all(cities: list[str]) -> None:
         event_study(c)
         stats[c] = latency_stats(c)
     append_latency_to_metrics(stats)
+    append_mva_to_metrics(cities)
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     run_all(["delhi", "pune"])
+
+
+def mva_crosscheck(city: str, share_threshold: float = 0.1, agree_frac: float = 0.5) -> dict:
+    """Method M vs Method A agreement for biomass on the highest-fire attribution day.
+
+    Validates the triangulation: on a stubble day, do the model counterfactual and the
+    attribution arithmetic agree? (DECISION_LAYER_SPEC §A4.2)
+    """
+    import lightgbm as lgb
+
+    from backend.config import geo_city_dir, load_interventions
+    from backend.features.build import FEATURE_COLUMNS
+    from backend.features.interpolate import _idw, _neighbors
+    from backend.models.dataset import model_dir
+
+    sdir = snap_dir(city)
+    attr = pd.read_parquet(sdir / "attribution.parquet")
+    attr["ts_utc"] = pd.to_datetime(attr["ts_utc"], utc=True)
+    ts = attr.groupby("ts_utc")["biomass"].mean().idxmax()  # the high-fire day
+    attr_t = attr[attr["ts_utc"] == ts].set_index("hex_id")
+    hot = attr_t[attr_t["biomass"] > share_threshold]
+    if hot.empty:
+        return {"city": city, "n": 0, "agreement_pct": None, "ts": str(ts)}
+
+    nowcast = pd.read_parquet(sdir / "hex_nowcast.parquet")
+    nowcast["ts_utc"] = pd.to_datetime(nowcast["ts_utc"], utc=True)
+    now_t = nowcast[nowcast["ts_utc"] == ts].set_index("hex_id")
+    panel = pd.read_parquet(sdir / "features.parquet")
+    panel["ts_utc"] = pd.to_datetime(panel["ts_utc"], utc=True)
+    panel_t = panel[panel["ts_utc"] == ts].drop_duplicates("station_id")
+    if panel_t.empty:
+        return {"city": city, "n": 0, "agreement_pct": None, "ts": str(ts)}
+
+    e_mid = load_interventions()["biomass_enforcement"]["efficacy"][1]
+    model = lgb.Booster(model_file=str(model_dir(city) / "pm25_h24.txt"))
+    X = panel_t[FEATURE_COLUMNS].to_numpy(dtype=float)
+    Xm = X.copy()
+    for f in ("fire_load_upwind_24", "fire_count_radius_24"):
+        Xm[:, FEATURE_COLUMNS.index(f)] *= (1 - e_mid)
+    delta_station = np.clip(model.predict(X) - model.predict(Xm), 0, None)
+
+    grid = pd.read_parquet(geo_city_dir(city) / "grid.parquet")
+    stations = panel_t[["station_id", "lat", "lng"]].reset_index(drop=True)
+    from backend.config import city_config
+    nn_idx, weights, _ = _neighbors(grid, stations, float(city_config(city)["idw_max_radius_km"]))
+    hex_delta_m = _idw(delta_station, nn_idx, weights)
+    hpos = {h: i for i, h in enumerate(grid["hex_id"].to_numpy())}
+
+    agree = []
+    for hex_id, row in hot.iterrows():
+        if hex_id not in now_t.index or hex_id not in hpos:
+            continue
+        pm = float(now_t.loc[hex_id, "pm25"])
+        a = pm * float(row["biomass"]) * e_mid
+        m = float(hex_delta_m[hpos[hex_id]])
+        denom = max(a, m, 1e-6)
+        agree.append(abs(a - m) <= agree_frac * denom)
+    pct = round(100 * np.mean(agree), 1) if agree else None
+    return {"city": city, "n": len(agree), "agreement_pct": pct, "ts": str(ts),
+            "e_mid": e_mid, "threshold": share_threshold}
+
+
+def append_mva_to_metrics(cities: list[str]) -> None:
+    lines = ["", "## Triangulation cross-check — biomass Method M vs Method A", "",
+             "On each city's highest-fire attribution day, fraction of high-biomass hexes where the "
+             "model counterfactual (M) and attribution arithmetic (A) agree within 50%.", ""]
+    for c in cities:
+        try:
+            r = mva_crosscheck(c)
+            if r["agreement_pct"] is not None:
+                lines.append(f"- **{c}**: {r['agreement_pct']}% agreement over {r['n']} hexes "
+                             f"(day {r['ts'][:10]}, efficacy_mid {r['e_mid']}).")
+            else:
+                lines.append(f"- **{c}**: no high-biomass hexes on the replay day (low-fire snapshot).")
+        except Exception as exc:  # noqa: BLE001
+            lines.append(f"- **{c}**: cross-check unavailable ({exc}).")
+    with (DOCS_DIR / "metrics.md").open("a", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")

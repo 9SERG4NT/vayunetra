@@ -76,6 +76,33 @@ The model beats persistence, climatology and raw CAMS at every horizon. See
 [docs/DIAGNOSIS.md](docs/DIAGNOSIS.md) where the 24h Delhi skill falls short of the
 0.25 target — reported, not hidden.
 
+## Decision Layer (v1.1)
+Beyond intelligence + evidence, VayuNetra answers *what to do, who does it, how much it
+helps, at what confidence and cost* — under a strict honesty architecture.
+
+![screenshot placeholder](docs/screenshot-decide.png)
+
+- **Scenario engine** — for any hotspot + intervention, a **model-implied ΔAQI range**
+  `[lo, mid, hi]` from two triangulated methods: attribution arithmetic (Method A) and,
+  where the mechanism is a real model feature, a model counterfactual (Method M). Confidence
+  is **inherited from attribution** (a tier word, never an invented %), downgraded on method
+  disagreement. All efficacy/cost/time/department priors live in `config/interventions.yaml`.
+- **Why-engine** — ≤4 bullets of deterministic, data-derived facts per hotspot (PM trend,
+  upwind fire trend, dispersion status, ranked driver).
+- **Order document** — a directed-intervention order (department, legal basis, ΔAQI range,
+  time-to-impact, review-by) generated on click.
+- **Dispatch optimiser** — greedy insertion routing of N inspectors under a shift budget vs
+  a geography-blind naive plan. On the Delhi snapshot at 4 inspectors: **+40.7 % impact,
+  −110 km travel**.
+- **Validation** — biomass Method M vs Method A agree **82 %** on the 2025-11-11 stubble day
+  (`docs/metrics.md`). Method note: **[docs/DECISION_LAYER.md](docs/DECISION_LAYER.md)**.
+
+Try it: the **Decide** tab in a hex panel, the **/decide** page (scenario table + dispatch),
+or `make decide-smoke` (`uv run python tasks.py decide-smoke`).
+
+> Everything here is a **planning estimate** — correlational model + editable literature
+> priors, for prioritisation, not a causal guarantee. Language and UI reflect that.
+
 ## Honest limitations
 - **Attribution is evidence-weighted, confidence-scored estimation — not regulatory
   source apportionment** (which needs chemical speciation). Every number carries a

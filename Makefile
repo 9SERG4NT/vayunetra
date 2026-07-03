@@ -71,6 +71,9 @@ test:
 	uv run pytest -q backend/tests
 	cd frontend && npx tsc --noEmit
 
+decide-smoke:
+	$(PY) scripts/decide_smoke.py delhi
+
 snapshot:
 	tar -czf vayunetra_snapshots.tar.gz -C data snapshots
 	@echo "Wrote vayunetra_snapshots.tar.gz"

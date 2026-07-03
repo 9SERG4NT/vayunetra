@@ -52,6 +52,8 @@ def main() -> int:
     if target == "test":
         rc = sh(["uv", "run", "pytest", "-q", "backend/tests"])
         return rc or sh(["npx", "tsc", "--noEmit"], cwd=ROOT / "frontend")
+    if target == "decide-smoke":
+        return sh(["uv", "run", "python", "scripts/decide_smoke.py", cities[0] if cities else "delhi"])
     if target == "snapshot":
         import tarfile
         out = ROOT / "vayunetra_snapshots.tar.gz"
