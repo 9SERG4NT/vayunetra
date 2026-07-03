@@ -19,13 +19,13 @@ from backend.models.attribution import SOURCES
 
 
 def _source_dept_map() -> dict[str, dict]:
-    """source -> {department, legal_basis} using the highest-efficacy intervention per source."""
+    """source -> {department, legal_basis, intervention_id} via highest-efficacy intervention."""
     best: dict[str, dict] = {}
-    for iv in load_interventions().values():
+    for iid, iv in load_interventions().items():
         src = iv["targets"]
         if src not in best or iv["efficacy"][1] > best[src]["_eff"]:
             best[src] = {"department": iv["department"], "legal_basis": iv["legal_basis"],
-                         "_eff": iv["efficacy"][1]}
+                         "intervention_id": iid, "_eff": iv["efficacy"][1]}
     return best
 
 log = logging.getLogger("vayunetra.actions.ranker")
@@ -110,6 +110,7 @@ def rank_city(city: str) -> dict:
         dept = dept_map.get(c["source"], {})
         c["department"] = dept.get("department")
         c["legal_basis"] = dept.get("legal_basis")
+        c["intervention_id"] = dept.get("intervention_id")
         if grap and grap["headline_stage"] > 0:
             c["grap_context"] = f"{grap['label']} (predicted 48h stage {grap['predicted_stage_48h']})"
         c["created_ts"] = created

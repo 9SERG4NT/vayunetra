@@ -83,6 +83,7 @@ class Action(BaseModel):
     recommended_action: str
     department: str | None = None
     legal_basis: str | None = None
+    intervention_id: str | None = None
     grap_context: str | None = None
     created_ts: str
 

@@ -264,6 +264,26 @@ def order_create(city: str, body: OrderRequest):
     return {"url": url, "generation_ms": round(gen_ms)}
 
 
+@router.get("/decide/{city}/{hex_id}")
+def decide_hex(city: str, hex_id: str, t: str | None = Query(default=None)):
+    """Why-panel + ranked interventions for a hex (one round-trip for the Decide tab)."""
+    deps.validate_city(city)
+    from backend.actions.simulate import rank_interventions
+    from backend.actions.why import why
+    return {"city": city, "hex_id": hex_id, "why": why(city, hex_id, t),
+            "interventions": rank_interventions(city, hex_id, t)}
+
+
+@router.get("/decide/{city}")
+def decide_city(city: str):
+    """City-level scenario comparison across all interventions (for the /decide table)."""
+    deps.validate_city(city)
+    from backend.actions.simulate import simulate_city
+    from backend.config import load_interventions
+    return {"city": city,
+            "scenarios": [simulate_city(city, iid) for iid in load_interventions()]}
+
+
 @router.post("/dispatch/{city}")
 def dispatch_endpoint(city: str, inspectors: int = Query(default=10),
                       shift_hours: float = Query(default=8.0)):

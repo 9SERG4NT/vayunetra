@@ -4,6 +4,7 @@ import CityToggle from "./components/CityToggle";
 import GrapChip from "./components/GrapChip";
 import CommandPage from "./pages/CommandPage";
 import ActionsPage from "./pages/ActionsPage";
+import DecidePage from "./pages/DecidePage";
 import MetricsPage from "./pages/MetricsPage";
 import { api } from "./api";
 import type { CityInfo, GrapStatus } from "./types";
@@ -44,6 +45,7 @@ export default function App() {
         <nav className="flex gap-1">
           <NavLink to="/" end className={navClass}>Command</NavLink>
           <NavLink to="/actions" className={navClass}>Actions</NavLink>
+          <NavLink to="/decide" className={navClass}>Decide</NavLink>
           <NavLink to="/metrics" className={navClass}>Metrics</NavLink>
         </nav>
         <div className="ml-auto flex items-center gap-3">
@@ -55,6 +57,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<CommandPage city={city} cityInfo={cityInfo} />} />
           <Route path="/actions" element={<ActionsPage city={city} />} />
+          <Route path="/decide" element={<DecidePage city={city} cityInfo={cityInfo} />} />
           <Route path="/metrics" element={<MetricsPage city={city} />} />
         </Routes>
       </main>

@@ -82,6 +82,9 @@ export interface ActionItem {
   aqi: number;
   score: number;
   recommended_action: string;
+  department?: string | null;
+  legal_basis?: string | null;
+  intervention_id?: string | null;
   grap_context?: string | null;
   created_ts: string;
 }
@@ -129,4 +132,107 @@ export interface VulnPoint {
 export interface Vulnerability {
   schools: VulnPoint[];
   hospitals: VulnPoint[];
+}
+
+// --- Decision Layer ---
+export interface Range {
+  lo: number;
+  mid: number;
+  hi: number;
+}
+
+export interface Intervention {
+  id: string;
+  label: string;
+  targets: string;
+  efficacy: [number, number, number];
+  time_to_impact_h: [number, number];
+  cost_tier: string;
+  department: string;
+  legal_basis: string;
+  basis: string;
+}
+
+export interface Scenario {
+  city: string;
+  hex_id: string;
+  intervention_id: string;
+  label: string;
+  target_source: string;
+  method: string;
+  aqi_now: number;
+  delta_aqi: Range;
+  aqi_after: Range;
+  confidence: string;
+  confidence_downgraded: boolean;
+  department: string;
+  legal_basis: string;
+  time_to_impact_h: [number, number];
+  cost_tier: string;
+  assumptions: string[];
+  exposure: {
+    schools_affected: number;
+    hospitals_affected: number;
+    person_hours_avoided: Range;
+    person_hours_basis: string;
+  };
+}
+
+export interface WhyResponse {
+  city: string;
+  hex_id: string;
+  bullets: string[];
+  conclusion: string;
+  polished: boolean;
+}
+
+export interface DecideHex {
+  city: string;
+  hex_id: string;
+  why: WhyResponse;
+  interventions: Scenario[];
+}
+
+export interface CityScenario {
+  city: string;
+  intervention_id: string;
+  label: string;
+  hexes_affected: number;
+  delta_aqi_weighted_mean: number;
+  person_hours_avoided_total: number;
+  top_hexes: { hex_id: string; locality: string; delta_aqi_mid: number; person_hours_mid: number }[];
+}
+
+export interface DispatchStop {
+  hex: string;
+  locality: string;
+  intervention: string;
+  eta_ist: string;
+  impact: number;
+  aqi: number;
+  lat: number;
+  lng: number;
+}
+
+export interface DispatchRoute {
+  inspector_id: number;
+  stops: DispatchStop[];
+  route_km: number;
+  utilisation: number;
+}
+
+export interface DispatchPlan {
+  city: string;
+  inspectors: number;
+  shift_hours: number;
+  depot: { lat: number; lng: number };
+  plan: DispatchRoute[];
+  totals: { impact_covered: number; sites_covered: number; travel_km: number };
+  baseline_comparison: {
+    naive_impact_covered: number;
+    naive_sites: number;
+    naive_travel_km: number;
+    impact_gain_pct: number;
+    travel_km_saved: number;
+  };
 }

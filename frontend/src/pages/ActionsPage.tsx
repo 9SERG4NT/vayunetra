@@ -6,11 +6,23 @@ import type { ActionItem } from "../types";
 export default function ActionsPage({ city }: { city: string }) {
   const [actions, setActions] = useState<ActionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ordering, setOrdering] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     api.actions(city).then((a) => setActions(a.actions)).finally(() => setLoading(false));
   }, [city]);
+
+  const makeOrder = async (a: ActionItem) => {
+    if (!a.intervention_id) return;
+    setOrdering(a.id);
+    try {
+      const { url } = await api.createOrder(city, a.hex, a.intervention_id);
+      window.open(url, "_blank");
+    } finally {
+      setOrdering(null);
+    }
+  };
 
   return (
     <div className="h-full overflow-y-auto p-8">
@@ -33,8 +45,8 @@ export default function ActionsPage({ city }: { city: string }) {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
                   <th className="p-3">#</th><th className="p-3">Locality</th><th className="p-3">Source</th>
-                  <th className="p-3">Share</th><th className="p-3">Conf.</th><th className="p-3">AQI</th>
-                  <th className="p-3">Score</th><th className="p-3">Evidence</th>
+                  <th className="p-3">Department</th><th className="p-3">Share</th><th className="p-3">Conf.</th>
+                  <th className="p-3">AQI</th><th className="p-3">Score</th><th className="p-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -48,6 +60,7 @@ export default function ActionsPage({ city }: { city: string }) {
                         {a.source}
                       </span>
                     </td>
+                    <td className="p-3 text-xs text-slate-500">{a.department ?? "—"}</td>
                     <td className="p-3 text-slate-600">{Math.round(a.share * 100)}%</td>
                     <td className="p-3">
                       <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
@@ -62,9 +75,15 @@ export default function ActionsPage({ city }: { city: string }) {
                              style={{ width: `${Math.min(100, a.score * 400)}%` }} />
                       </div>
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 whitespace-nowrap">
                       <a href={api.evidenceUrl(city, a.id)} target="_blank" rel="noreferrer"
-                         className="font-medium text-sky-600 hover:text-sky-500 hover:underline">Open →</a>
+                         className="font-medium text-sky-600 hover:text-sky-500 hover:underline">Evidence</a>
+                      {a.intervention_id && (
+                        <button onClick={() => makeOrder(a)} disabled={ordering === a.id}
+                                className="ml-3 font-medium text-slate-700 hover:text-slate-900 disabled:opacity-50">
+                          {ordering === a.id ? "…" : "Order →"}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

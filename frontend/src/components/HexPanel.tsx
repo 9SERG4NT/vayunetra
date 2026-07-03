@@ -7,6 +7,7 @@ import { api } from "../api";
 import { CONFIDENCE_COLOR, SOURCE_COLOR } from "../theme";
 import type { ActionItem, AttributionResponse, ForecastResponse } from "../types";
 import AdvisoryModal from "./AdvisoryModal";
+import DecidePanel from "./DecidePanel";
 
 interface Props {
   city: string;
@@ -31,6 +32,7 @@ export default function HexPanel({ city, hex, action, onClose }: Props) {
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
   const [attr, setAttr] = useState<AttributionResponse | null>(null);
   const [showAdvisory, setShowAdvisory] = useState(false);
+  const [tab, setTab] = useState<"overview" | "decide">("overview");
 
   useEffect(() => {
     setForecast(null);
@@ -72,6 +74,24 @@ export default function HexPanel({ city, hex, action, onClose }: Props) {
         </button>
       </div>
 
+      <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100/70 p-1">
+        {(["overview", "decide"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`rounded-lg px-3 py-1 text-sm font-medium capitalize transition ${
+              tab === t ? "bg-white text-sky-700 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {tab === "decide" && <DecidePanel city={city} hex={hex} />}
+
+      {tab === "overview" && (
+      <>
       <section>
         <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
           72h history + forecast
@@ -126,6 +146,8 @@ export default function HexPanel({ city, hex, action, onClose }: Props) {
         <div>Fires (7d): {String(ev.fire_n ?? "—")} · FRP Σ {String(ev.frp_sum ?? "—")}</div>
         <div>Nearest station: {String(ev.station_km ?? "—")} km · biomass lift {String(ev.biomass_lift ?? "—")}</div>
       </section>
+      </>
+      )}
 
       <div className="mt-auto flex gap-2">
         {action && (
