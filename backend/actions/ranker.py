@@ -14,8 +14,19 @@ import numpy as np
 import pandas as pd
 
 from backend.actions.grap import grap_status
-from backend.config import geo_city_dir, snap_dir
+from backend.config import geo_city_dir, load_interventions, snap_dir
 from backend.models.attribution import SOURCES
+
+
+def _source_dept_map() -> dict[str, dict]:
+    """source -> {department, legal_basis} using the highest-efficacy intervention per source."""
+    best: dict[str, dict] = {}
+    for iv in load_interventions().values():
+        src = iv["targets"]
+        if src not in best or iv["efficacy"][1] > best[src]["_eff"]:
+            best[src] = {"department": iv["department"], "legal_basis": iv["legal_basis"],
+                         "_eff": iv["efficacy"][1]}
+    return best
 
 log = logging.getLogger("vayunetra.actions.ranker")
 
@@ -92,9 +103,13 @@ def rank_city(city: str) -> dict:
 
     ranked = sorted(candidates, key=lambda c: c["score"], reverse=True)[:TOP_N]
     created = datetime.now(timezone.utc).isoformat()
+    dept_map = _source_dept_map()
     for i, c in enumerate(ranked, start=1):
         c["id"] = str(i)
         c["recommended_action"] = ACTION_TEXT[c["source"]]
+        dept = dept_map.get(c["source"], {})
+        c["department"] = dept.get("department")
+        c["legal_basis"] = dept.get("legal_basis")
         if grap and grap["headline_stage"] > 0:
             c["grap_context"] = f"{grap['label']} (predicted 48h stage {grap['predicted_stage_48h']})"
         c["created_ts"] = created

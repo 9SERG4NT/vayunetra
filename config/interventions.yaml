@@ -1,0 +1,49 @@
+# Intervention priors for the Decision Layer (DECISION_LAYER_SPEC §A1.1).
+# efficacy = fraction of the TARGETED SOURCE's contribution removed at hex level, [lo, mid, hi]
+# basis: seed planning priors — conservative, to be reviewed/annotated by the team before finale.
+construction_halt:
+  label: "Halt construction & demolition activity"
+  targets: construction_dust
+  efficacy: [0.45, 0.60, 0.80]
+  time_to_impact_h: [6, 24]
+  cost_tier: "high (economic disruption)"
+  department: "Municipal Corporation — Building Dept"
+  legal_basis: "GRAP Stage III (Delhi-NCR) / local C&D dust rules"
+  basis: "Direct source removal; residual dust persists"
+biomass_enforcement:
+  label: "Enforce against open biomass/waste burning (upwind)"
+  targets: biomass
+  efficacy: [0.30, 0.50, 0.70]
+  time_to_impact_h: [12, 48]
+  cost_tier: "medium"
+  department: "SPCB + District Administration (source region)"
+  legal_basis: "Air Act 1981; NGT directions on open burning"
+  basis: "Cannot stop all upwind fires; jurisdictional friction"
+  model_counterfactual: {feature_scale: {fire_load_upwind_24: null, fire_count_radius_24: null}}  # scale = (1 - e)
+heavy_vehicle_restriction:
+  label: "Restrict heavy/diesel truck entry"
+  targets: traffic
+  efficacy: [0.15, 0.25, 0.35]
+  time_to_impact_h: [6, 24]
+  cost_tier: "medium-high (logistics)"
+  department: "Traffic Police"
+  legal_basis: "GRAP Stage IV analog; MV Act"
+  basis: "Heavy vehicles are a minority of traffic PM; hence sub-0.35 cap"
+industrial_curbs:
+  label: "Curb high-emission industrial operations"
+  targets: industry
+  efficacy: [0.30, 0.45, 0.60]
+  time_to_impact_h: [12, 48]
+  cost_tier: "high"
+  department: "State Pollution Control Board"
+  legal_basis: "Air Act consent conditions; GRAP III/IV"
+  basis: "Partial curtailment, not closure"
+dust_suppression:
+  label: "Mechanised sweeping + water sprinkling"
+  targets: construction_dust
+  efficacy: [0.05, 0.10, 0.15]
+  time_to_impact_h: [2, 6]
+  cost_tier: "low"
+  department: "Municipal Corporation — Sanitation"
+  legal_basis: "GRAP Stage I routine measure"
+  basis: "Literature consistently shows modest, short-lived effects — deliberately small"

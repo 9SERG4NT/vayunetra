@@ -81,8 +81,21 @@ class Action(BaseModel):
     aqi: float
     score: float
     recommended_action: str
+    department: str | None = None
+    legal_basis: str | None = None
     grap_context: str | None = None
     created_ts: str
+
+
+class SimulateRequest(BaseModel):
+    hex_id: str | None = None       # null => city-level scenario
+    intervention_id: str
+    at: str | None = None
+
+
+class OrderRequest(BaseModel):
+    hex_id: str
+    intervention_id: str
 
 
 class ActionsResponse(BaseModel):

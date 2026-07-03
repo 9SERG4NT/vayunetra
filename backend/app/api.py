@@ -8,9 +8,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from backend.app import deps
 from backend.app.schemas import (
     ActionsResponse, AttributionResponse, City, ForecastResponse, GridResponse,
-    TimelineResponse,
+    OrderRequest, SimulateRequest, TimelineResponse,
 )
-from backend.config import city_config, load_cities
+from backend.config import city_config, load_cities, load_interventions
 
 router = APIRouter()
 
@@ -215,6 +215,61 @@ def grap(city: str):
     if status is None:
         return JSONResponse({"city": city, "grap": False})
     return status
+
+
+# --- Decision Layer (DECISION_LAYER_SPEC §A1.4, §A2) ------------------------
+@router.get("/interventions/{city}")
+def interventions(city: str):
+    deps.validate_city(city)
+    out = []
+    for iid, iv in load_interventions().items():
+        out.append({"id": iid, "label": iv["label"], "targets": iv["targets"],
+                    "efficacy": iv["efficacy"], "time_to_impact_h": iv["time_to_impact_h"],
+                    "cost_tier": iv["cost_tier"], "department": iv["department"],
+                    "legal_basis": iv["legal_basis"], "basis": iv["basis"]})
+    return out
+
+
+@router.post("/simulate/{city}")
+def simulate_endpoint(city: str, body: SimulateRequest):
+    deps.validate_city(city)
+    from backend.actions.simulate import simulate, simulate_city
+    if body.hex_id:
+        return simulate(city, body.hex_id, body.intervention_id, body.at)
+    return simulate_city(city, body.intervention_id, body.at)
+
+
+@router.get("/why/{city}/{hex_id}")
+def why_endpoint(city: str, hex_id: str, t: str | None = Query(default=None),
+                 lang: str | None = Query(default=None)):
+    deps.validate_city(city)
+    from backend.actions.why import why
+    return why(city, hex_id, t, lang)
+
+
+@router.get("/order/{city}")
+def order_html(city: str, hex: str = Query(...), intervention: str = Query(...)):
+    deps.validate_city(city)
+    from backend.actions.evidence import generate_order_html
+    html, gen_ms = generate_order_html(city, hex, intervention)
+    return HTMLResponse(content=html, headers={"X-Generation-Ms": f"{gen_ms:.0f}"})
+
+
+@router.post("/actions/{city}/order")
+def order_create(city: str, body: OrderRequest):
+    deps.validate_city(city)
+    from backend.actions.evidence import generate_order_html
+    _, gen_ms = generate_order_html(city, body.hex_id, body.intervention_id)
+    url = f"/api/order/{city}?hex={body.hex_id}&intervention={body.intervention_id}"
+    return {"url": url, "generation_ms": round(gen_ms)}
+
+
+@router.post("/dispatch/{city}")
+def dispatch_endpoint(city: str, inspectors: int = Query(default=10),
+                      shift_hours: float = Query(default=8.0)):
+    deps.validate_city(city)
+    from backend.actions.dispatch import dispatch
+    return dispatch(city, inspectors, shift_hours)
 
 
 def _nn(v):

@@ -272,3 +272,81 @@ pre{{background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;overflow:au
 OpenStreetMap land use. Attribution is <b>evidence-weighted, confidence-scored — not regulatory
 source apportionment</b>. Hourly AQI proxy uses hourly concentrations (official CPCB NAQI uses 24-h averages).</p>
 </body></html>"""
+
+
+# --- Directed Intervention ORDER document (DECISION_LAYER_SPEC §A1.4) --------
+def _locality_for(city: str, hex_id: str) -> str:
+    grid = pd.read_parquet(geo_city_dir(city) / "grid.parquet")
+    m = grid[grid["hex_id"] == hex_id]
+    return str(m.iloc[0]["locality"]) if not m.empty else hex_id
+
+
+def generate_order_html(city: str, hex_id: str, intervention_id: str) -> tuple[str, float]:
+    """Order = evidence pack + a 'Directed Intervention' section (planning estimates)."""
+    from backend.actions.simulate import simulate
+
+    t0 = time.time()
+    sc = simulate(city, hex_id, intervention_id)
+    lat, lng = _hex_center(hex_id)
+    locality = _locality_for(city, hex_id)
+    ref = f"VN-ORDER-{city}-{datetime.now(timezone.utc):%Y%m%d}-{intervention_id}"
+    review_by = _to_ist(pd.Timestamp.now(tz="UTC") + pd.Timedelta(hours=sc["time_to_impact_h"][1]))
+    da = sc["delta_aqi"]
+    directed = _DIRECTED_TEMPLATE.format(
+        label=sc["label"], department=sc["department"], legal_basis=sc["legal_basis"],
+        aqi_now=sc["aqi_now"], da_lo=da["lo"], da_mid=da["mid"], da_hi=da["hi"],
+        tti_lo=sc["time_to_impact_h"][0], tti_hi=sc["time_to_impact_h"][1], cost=sc["cost_tier"],
+        method=sc["method"], confidence=sc["confidence"], review_by=review_by,
+        conf_color=CONF_COLOR.get(sc["confidence"], "#64748b"),
+        person_hours=f"{sc['exposure']['person_hours_avoided']['mid']:,}",
+        schools=sc["exposure"]["schools_affected"], hospitals=sc["exposure"]["hospitals_affected"],
+    )
+    html = _ORDER_TEMPLATE.format(
+        ref=ref, city=city_config(city)["name"], locality=locality, hex=hex_id,
+        ts=_to_ist(pd.Timestamp.now(tz="UTC")), map_png=_map_png(city, hex_id, lat, lng),
+        fc_png=_forecast_png(city, hex_id), attr_png=_attribution_png(city, hex_id)[0],
+        directed=directed,
+    )
+    gen_ms = (time.time() - t0) * 1000
+    log.info("[%s] order %s/%s generated in %.0f ms", city, hex_id, intervention_id, gen_ms)
+    return html, gen_ms
+
+
+_DIRECTED_TEMPLATE = """<div class="directed">
+<h2>Directed Intervention (planning estimate)</h2>
+<table>
+<tr><th>Intervention</th><td>{label}</td></tr>
+<tr><th>Responsible department</th><td>{department}</td></tr>
+<tr><th>Legal basis</th><td>{legal_basis}</td></tr>
+<tr><th>Current AQI (proxy)</th><td>{aqi_now}</td></tr>
+<tr><th>Model-implied ΔAQI</th><td><b>{da_mid}</b> (range {da_lo}–{da_hi}) · method: {method}</td></tr>
+<tr><th>Confidence</th><td><span class="badge" style="background:{conf_color}">{confidence}</span></td></tr>
+<tr><th>Time to impact</th><td>{tti_lo}–{tti_hi} h · cost: {cost}</td></tr>
+<tr><th>Exposure in relief zone</th><td>{schools} schools, {hospitals} hospitals · ~{person_hours} person-hours avoided (proxy)</td></tr>
+<tr><th>Review by</th><td><b>{review_by}</b></td></tr>
+</table>
+<p class="disclaimer">These are <b>planning estimates</b> from attribution × editable priors (config/interventions.yaml),
+model-implied — <b>not</b> a causal guarantee. Corroborate on site before formal issuance.</p>
+</div>"""
+
+_ORDER_TEMPLATE = """<!doctype html><html><head><meta charset="utf-8">
+<title>VayuNetra Order {ref}</title><style>
+body{{font-family:system-ui,Segoe UI,Roboto,sans-serif;max-width:860px;margin:24px auto;color:#0f172a;padding:0 16px}}
+h1{{font-size:20px;margin:0}} h2{{font-size:15px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-top:28px}}
+.meta{{color:#475569;font-size:13px}} img{{max-width:100%;border:1px solid #e2e8f0;border-radius:8px}}
+table{{border-collapse:collapse;width:100%;font-size:13px}} td,th{{border:1px solid #e2e8f0;padding:6px 9px;text-align:left}}
+.badge{{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px}}
+.directed{{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:8px 16px;margin-top:20px}}
+.disclaimer{{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:12px}}
+</style></head><body>
+<h1>VayuNetra — Directed Intervention Order</h1>
+<p class="meta">Ref <b>{ref}</b> · {city} · {locality} · hex {hex} · issued {ts}</p>
+{directed}
+<h2>Location &amp; evidence map</h2><img src="data:image/png;base64,{map_png}">
+<h2>72-hour observed + forecast</h2><img src="data:image/png;base64,{fc_png}">
+<h2>Source attribution</h2><img src="data:image/png;base64,{attr_png}">
+<h2>Method &amp; sources</h2>
+<p class="meta">Data: OpenAQ/CPCB, NASA FIRMS VIIRS, Open-Meteo ERA5+CAMS, OpenStreetMap.
+Attribution is evidence-weighted, confidence-scored — not regulatory apportionment. Intervention outcomes
+are planning estimates (correlational model + literature priors), designed for prioritisation.</p>
+</body></html>"""

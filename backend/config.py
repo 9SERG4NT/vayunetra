@@ -106,6 +106,28 @@ def load_grap() -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
+SOURCE_CLASSES = {"biomass", "traffic", "industry", "construction_dust", "background"}
+
+
+@lru_cache(maxsize=1)
+def load_interventions() -> dict[str, Any]:
+    """Load + validate intervention priors (DECISION_LAYER_SPEC §A1.1).
+
+    Validates: efficacy monotonic (lo<=mid<=hi) and target ∈ the 5 source classes.
+    """
+    with open(CONFIG_DIR / "interventions.yaml", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    for iid, spec in data.items():
+        eff = spec.get("efficacy", [])
+        if not (len(eff) == 3 and eff[0] <= eff[1] <= eff[2]):
+            raise ValueError(f"intervention '{iid}': efficacy must be [lo<=mid<=hi], got {eff}")
+        if spec.get("targets") not in SOURCE_CLASSES:
+            raise ValueError(f"intervention '{iid}': targets '{spec.get('targets')}' not in {SOURCE_CLASSES}")
+        if "basis" not in spec:
+            raise ValueError(f"intervention '{iid}': missing 'basis' note")
+    return data
+
+
 def city_config(city: str) -> dict[str, Any]:
     cities = load_cities()
     if city not in cities:

@@ -95,6 +95,8 @@ def predict_city(city: str) -> dict:
     grid = pd.read_parquet(geo_city_dir(city) / "grid.parquet")
 
     origin = _latest_origin(panel)
+    # Persist the tiny origin frame so the Decision Layer's Method-M avoids reloading the full panel.
+    origin.to_parquet(model_dir(city) / "origin.parquet", index=False)
     stations = origin[["station_id", "lat", "lng"]].reset_index(drop=True)
     cams_lut = _station_cams(city, stations)
     nn_idx, weights, _ = _neighbors(grid, stations, float(city_config(city)["idw_max_radius_km"]))
