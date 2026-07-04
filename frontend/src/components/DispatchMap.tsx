@@ -44,6 +44,15 @@ export default function DispatchMap({ bbox, cells, plan, depot }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Recenter when the city (bbox) changes — otherwise the map stays on the previous city.
+  useEffect(() => {
+    mapRef.current?.easeTo({
+      center: [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2],
+      zoom: 9.2,
+      duration: 500,
+    });
+  }, [bbox[0], bbox[1], bbox[2], bbox[3]]);
+
   useEffect(() => {
     if (!overlayRef.current) return;
     const stops = plan.flatMap((r) =>

@@ -7,7 +7,7 @@ export default function DecidePage({ city, cityInfo }: { city: string; cityInfo?
   const [scenarios, setScenarios] = useState<CityScenario[]>([]);
   const [loadingScenarios, setLoadingScenarios] = useState(true);
   const [cells, setCells] = useState<GridCell[]>([]);
-  const [inspectors, setInspectors] = useState(10);
+  const [inspectors, setInspectors] = useState(6);
   const [shift, setShift] = useState(8);
   const [plan, setPlan] = useState<DispatchPlan | null>(null);
   const [loadingPlan, setLoadingPlan] = useState(false);
