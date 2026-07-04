@@ -5,6 +5,7 @@ import type { CityInfo, CityScenario, DispatchPlan, GridCell } from "../types";
 
 export default function DecidePage({ city, cityInfo }: { city: string; cityInfo?: CityInfo }) {
   const [scenarios, setScenarios] = useState<CityScenario[]>([]);
+  const [loadingScenarios, setLoadingScenarios] = useState(true);
   const [cells, setCells] = useState<GridCell[]>([]);
   const [inspectors, setInspectors] = useState(10);
   const [shift, setShift] = useState(8);
@@ -14,10 +15,16 @@ export default function DecidePage({ city, cityInfo }: { city: string; cityInfo?
 
   useEffect(() => {
     setScenarios([]);
+    setLoadingScenarios(true);
     setPlan(null);
-    api.decideCity(city).then((d) => setScenarios(d.scenarios)).catch(() => setScenarios([]));
+    api.decideCity(city)
+      .then((d) => setScenarios(d.scenarios))
+      .catch(() => setScenarios([]))
+      .finally(() => setLoadingScenarios(false));
     api.grid(city).then((g) => setCells(g.cells)).catch(() => setCells([]));
   }, [city]);
+
+  const anyImpact = scenarios.some((s) => s.hexes_affected > 0);
 
   useEffect(() => {
     window.clearTimeout(debounce.current);
@@ -54,15 +61,24 @@ export default function DecidePage({ city, cityInfo }: { city: string; cityInfo?
               </tr>
             </thead>
             <tbody>
-              {scenarios.length === 0 && (
+              {loadingScenarios && (
                 <tr><td colSpan={4} className="p-4 text-slate-400">Loading scenarios…</td></tr>
               )}
-              {scenarios.map((s) => (
+              {!loadingScenarios && !anyImpact && (
+                <tr>
+                  <td colSpan={4} className="p-5 text-slate-500">
+                    No hexes currently exceed AQI&nbsp;200 in this city, so no city-level intervention is
+                    triggered. This is the honest cleaner-city outcome — the scenario engine only quantifies
+                    impact where there is an active hotspot to act on.
+                  </td>
+                </tr>
+              )}
+              {!loadingScenarios && anyImpact && scenarios.map((s) => (
                 <tr key={s.intervention_id} className="border-b border-slate-100 last:border-0">
-                  <td className="p-3 font-medium text-slate-800">{s.label}</td>
+                  <td className="p-3 font-medium text-slate-800">{s.label ?? s.intervention_id}</td>
                   <td className="p-3 text-slate-600">{s.hexes_affected}</td>
                   <td className="p-3 font-semibold text-sky-600">{s.delta_aqi_weighted_mean}</td>
-                  <td className="p-3 text-slate-600">{s.person_hours_avoided_total.toLocaleString()}</td>
+                  <td className="p-3 text-slate-600">{(s.person_hours_avoided_total ?? 0).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -106,6 +122,11 @@ export default function DecidePage({ city, cityInfo }: { city: string; cityInfo?
             )}
 
             <div className="max-h-[220px] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              {plan && plan.totals.sites_covered === 0 && (
+                <div className="p-2 text-xs text-slate-500">
+                  No hotspots above AQI&nbsp;200 to dispatch to in this city right now.
+                </div>
+              )}
               {(plan?.plan ?? []).filter((r) => r.stops.length > 0).map((r) => (
                 <div key={r.inspector_id} className="mb-2 border-b border-slate-100 pb-2 last:border-0">
                   <div className="mb-0.5 flex items-center gap-2 text-sm font-semibold text-slate-800">

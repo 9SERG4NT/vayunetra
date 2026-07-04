@@ -260,8 +260,9 @@ def simulate_city(city: str, intervention_id: str, at: str | None = None) -> dic
     share = attr.reindex(hexes)[source].fillna(0.0).to_numpy() if source in attr.columns else np.zeros(len(hexes))
     mask = share > 0
     if not mask.any():
-        return {"city": city, "intervention_id": intervention_id, "hexes_affected": 0,
-                "delta_aqi_weighted_mean": 0, "person_hours_avoided_total": 0, "top_hexes": []}
+        return {"city": city, "intervention_id": intervention_id, "label": iv["label"],
+                "planning_estimate": True, "hexes_affected": 0, "delta_aqi_weighted_mean": 0,
+                "person_hours_avoided_total": 0, "top_hexes": []}
 
     hexes, share = hexes[mask], share[mask]
     pm25 = hot["pm25"].to_numpy()[mask]
