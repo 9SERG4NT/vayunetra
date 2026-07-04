@@ -47,3 +47,12 @@ dust_suppression:
   department: "Municipal Corporation — Sanitation"
   legal_basis: "GRAP Stage I routine measure"
   basis: "Literature consistently shows modest, short-lived effects — deliberately small"
+area_wide_measures:
+  label: "Area-wide GRAP measures (sweeping, sprinkling, hotspot patrol)"
+  targets: background
+  efficacy: [0.03, 0.08, 0.12]
+  time_to_impact_h: [2, 12]
+  cost_tier: "low-medium"
+  department: "GRAP Cell — DPCC / CAQM (Delhi) or State Pollution Control Board"
+  legal_basis: "GRAP Stage I–II area-wide measures"
+  basis: "Diffuse accumulated pollution has no single source; area-wide controls give modest, broad relief — efficacy kept deliberately low"
