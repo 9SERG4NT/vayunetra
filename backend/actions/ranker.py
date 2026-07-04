@@ -101,7 +101,20 @@ def rank_city(city: str) -> dict:
                 "exposure": round(exp, 3),
             })
 
-    ranked = sorted(candidates, key=lambda c: c["score"], reverse=True)[:TOP_N]
+    # Rank by score, but keep the queue geographically diverse: one row per hotspot
+    # AREA (its highest-scoring cell/source). Without this the top-N collapses onto
+    # adjacent cells of the single worst cluster (all showing the same saturated AQI),
+    # which is useless for dispatching inspectors to distinct locations.
+    ordered = sorted(candidates, key=lambda c: c["score"], reverse=True)
+    ranked, seen_localities = [], set()
+    for c in ordered:
+        loc = c["locality"] or c["hex"]
+        if loc in seen_localities:
+            continue
+        seen_localities.add(loc)
+        ranked.append(c)
+        if len(ranked) >= TOP_N:
+            break
     created = datetime.now(timezone.utc).isoformat()
     dept_map = _source_dept_map()
     for i, c in enumerate(ranked, start=1):
