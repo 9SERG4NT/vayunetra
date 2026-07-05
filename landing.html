@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VayuNetra — Urban Air Quality Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛰️%3C/text%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: {
+        primary: "#0284c7", "primary-dark": "#0369a1", ink: "#0f172a",
+        emerald: "#16a34a", amber: "#f59e0b",
+      },
+      fontFamily: { sans: ["Inter","system-ui","sans-serif"], mono: ["JetBrains Mono","monospace"] },
+      maxWidth: { container: "1200px" },
+      animation: { ticker: "ticker 34s linear infinite", floaty: "floaty 6s ease-in-out infinite" },
+      keyframes: {
+        ticker: { "0%": { transform: "translateX(0)" }, "100%": { transform: "translateX(-50%)" } },
+        floaty: { "0%,100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-8px)" } },
+      },
+    }},
+  };
+</script>
+<style>
+  body { font-family: Inter, system-ui, sans-serif; }
+  .material-symbols-outlined { font-family: "Material Symbols Outlined"; font-variation-settings: "opsz" 24; vertical-align: middle; }
+  /* Shader sits fixed behind everything */
+  #bg-shader { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -10; display: block; }
+  .glass { background: rgba(255,255,255,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(203,213,225,0.55); }
+  .card-shadow { box-shadow: 0 12px 32px -12px rgba(15,23,42,0.12); }
+  .hex-fade { -webkit-mask-image: linear-gradient(to bottom, black 78%, transparent); mask-image: linear-gradient(to bottom, black 78%, transparent); }
+  .grad-text { background: linear-gradient(90deg,#0284c7,#0891b2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+</style>
+</head>
+<body class="text-ink antialiased">
+
+<!-- ===== WEBGL SHADER BACKGROUND ===== -->
+<canvas id="bg-shader"></canvas>
+
+<!-- ===== NAV ===== -->
+<nav class="fixed top-0 inset-x-0 z-50 glass border-b border-slate-200/60">
+  <div class="max-w-container mx-auto flex items-center justify-between px-6 py-3.5">
+    <div class="flex items-center gap-8">
+      <a href="#top" class="flex items-center gap-2 text-lg font-extrabold tracking-tight">
+        <span>🛰️</span><span class="grad-text">VayuNetra</span>
+      </a>
+      <div class="hidden md:flex gap-6 text-sm font-medium text-slate-500">
+        <a href="#loop" class="hover:text-ink transition">The Loop</a>
+        <a href="#showcase" class="hover:text-ink transition">Product</a>
+        <a href="#results" class="hover:text-ink transition">Results</a>
+        <a href="#tech" class="hover:text-ink transition">Technology</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="https://github.com/9SERG4NT/vayunetra" class="hidden sm:inline text-sm font-medium text-slate-500 hover:text-ink transition">GitHub</a>
+      <a href="#demo" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition">View Demo</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top" class="pt-20">
+
+<!-- ===== HERO ===== -->
+<section class="relative overflow-hidden">
+  <div class="max-w-container mx-auto px-6 pt-16 pb-24 grid lg:grid-cols-2 gap-14 items-center">
+    <div class="flex flex-col items-start gap-6">
+      <span class="inline-flex items-center gap-2 rounded-full glass px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <span class="material-symbols-outlined text-[15px] text-primary">workspace_premium</span>
+        ET AI Hackathon 2.0 · PS 5 · Smart Cities
+      </span>
+      <h1 class="text-4xl md:text-6xl font-black leading-[1.05] tracking-tight">
+        The data exists.<br>
+        <span class="text-slate-400">The layer to act on it didn't.</span><br>
+        <span class="grad-text">VayuNetra is that layer.</span>
+      </h1>
+      <p class="text-lg text-slate-600 max-w-xl leading-relaxed">
+        From a pollution signal to a <b class="text-ink">court-ready enforcement order in seconds</b> —
+        source attribution, 72-hour hyperlocal forecasts, and inspector dispatch, fused from
+        <b class="text-ink">5 real public data sources</b>.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 mt-1">
+        <a href="#demo" class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3.5 font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary-dark transition">
+          View Live Demo <span class="material-symbols-outlined text-[19px]">arrow_forward</span>
+        </a>
+        <a href="https://github.com/9SERG4NT/vayunetra/blob/main/docs/PROJECT_DOSSIER.md" class="inline-flex items-center justify-center gap-2 rounded-xl glass px-7 py-3.5 font-semibold text-ink hover:bg-white transition">
+          Read the Method <span class="material-symbols-outlined text-[19px]">article</span>
+        </a>
+      </div>
+      <div class="flex items-center gap-6 pt-3 text-sm text-slate-500">
+        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-emerald">verified</span>100% real data</span>
+        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-emerald">bolt</span>offline-first demo</span>
+        <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-emerald">check_circle</span>28 tests passing</span>
+      </div>
+    </div>
+    <div class="animate-floaty">
+      <div class="rounded-2xl overflow-hidden glass card-shadow p-2">
+        <img src="docs/screenshots/01-command.png" alt="VayuNetra command view — Delhi AQI hex map" class="rounded-xl w-full"/>
+      </div>
+      <p class="text-center text-xs text-slate-400 mt-3">Live command view · Delhi · ~1 km H3 hexes coloured by CPCB AQI</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROBLEM STRIP ===== -->
+<section class="bg-ink text-white relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[0.07]" style="background-image:radial-gradient(circle at 2px 2px,#fff 1px,transparent 0);background-size:26px 26px"></div>
+  <div class="max-w-container mx-auto px-6 py-20 relative flex flex-col items-center text-center gap-10">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-20 w-full max-w-4xl">
+      <div><div class="text-5xl md:text-6xl font-black text-emerald tracking-tight">1.67M</div><div class="text-slate-400 mt-2">premature deaths / year in India<br><span class="text-slate-500 text-sm">(Lancet Planetary Health)</span></div></div>
+      <div><div class="text-5xl md:text-6xl font-black text-sky-400 tracking-tight">900+</div><div class="text-slate-400 mt-2">government monitors deployed<br><span class="text-slate-500 text-sm">under NCAP</span></div></div>
+      <div><div class="text-5xl md:text-6xl font-black text-amber tracking-tight">31%</div><div class="text-slate-400 mt-2">of cities have any response<br><span class="text-slate-500 text-sm">protocol (CAG audit, 2024)</span></div></div>
+    </div>
+    <h2 class="text-2xl md:text-3xl font-bold max-w-2xl">Cities don't need more dashboards. They need <span class="grad-text">decisions</span>.</h2>
+  </div>
+</section>
+
+<!-- ===== LIVE NUMBERS TICKER ===== -->
+<section class="glass border-y border-slate-200/60 py-3 overflow-hidden">
+  <div class="flex whitespace-nowrap animate-ticker font-mono text-sm text-slate-600 items-center">
+    <div class="flex items-center gap-8 px-4 shrink-0">
+      <span>44 CPCB stations</span><span class="text-primary">◆</span>
+      <span>1.04M measurements</span><span class="text-primary">◆</span>
+      <span>70,000 satellite fire detections</span><span class="text-primary">◆</span>
+      <span>5,810 one-km hexes</span><span class="text-primary">◆</span>
+      <span class="font-semibold text-emerald flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald animate-pulse"></span>2 cities live</span><span class="text-primary">◆</span>
+    </div>
+    <div class="flex items-center gap-8 px-4 shrink-0" aria-hidden="true">
+      <span>44 CPCB stations</span><span class="text-primary">◆</span>
+      <span>1.04M measurements</span><span class="text-primary">◆</span>
+      <span>70,000 satellite fire detections</span><span class="text-primary">◆</span>
+      <span>5,810 one-km hexes</span><span class="text-primary">◆</span>
+      <span class="font-semibold text-emerald flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald animate-pulse"></span>2 cities live</span><span class="text-primary">◆</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== THE LOOP ===== -->
+<section id="loop" class="max-w-container mx-auto px-6 py-24">
+  <div class="text-center max-w-2xl mx-auto mb-14">
+    <p class="text-sm font-semibold uppercase tracking-wider text-primary mb-2">The closed loop</p>
+    <h2 class="text-3xl md:text-4xl font-black tracking-tight">Signal → decision → action, every hour</h2>
+    <p class="text-slate-600 mt-3">The three capabilities the problem statement calls non-existent — plus the decision layer that turns them into orders.</p>
+  </div>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <!-- card -->
+    <div class="glass rounded-2xl p-5 card-shadow hover:-translate-y-1 transition">
+      <div class="w-11 h-11 rounded-xl bg-orange-100 text-orange-600 grid place-items-center mb-3"><span class="material-symbols-outlined">target</span></div>
+      <h3 class="font-bold text-lg mb-1">Attribute</h3>
+      <p class="text-sm text-slate-600">Which source is to blame, right now — 5 classes with a confidence badge. Two independent methods <b class="text-ink">agree 82%</b> on a real stubble day.</p>
+    </div>
+    <div class="glass rounded-2xl p-5 card-shadow hover:-translate-y-1 transition">
+      <div class="w-11 h-11 rounded-xl bg-sky-100 text-primary grid place-items-center mb-3"><span class="material-symbols-outlined">trending_up</span></div>
+      <h3 class="font-bold text-lg mb-1">Forecast</h3>
+      <p class="text-sm text-slate-600">24/48/72-hour PM2.5 at 1 km. <b class="text-ink">Beats persistence, climatology & CAMS</b> at every horizon — skill up to +0.27.</p>
+    </div>
+    <div class="glass rounded-2xl p-5 card-shadow hover:-translate-y-1 transition">
+      <div class="w-11 h-11 rounded-xl bg-violet-100 text-violet-600 grid place-items-center mb-3"><span class="material-symbols-outlined">format_list_numbered</span></div>
+      <h3 class="font-bold text-lg mb-1">Prioritise</h3>
+      <p class="text-sm text-slate-600">A ranked enforcement queue by severity × persistence × exposure × actionability — mapped to the <b class="text-ink">responsible department</b>.</p>
+    </div>
+    <div class="glass rounded-2xl p-5 card-shadow hover:-translate-y-1 transition">
+      <div class="w-11 h-11 rounded-xl bg-emerald-100 text-emerald grid place-items-center mb-3"><span class="material-symbols-outlined">gavel</span></div>
+      <h3 class="font-bold text-lg mb-1">Act</h3>
+      <p class="text-sm text-slate-600">One click → a <b class="text-ink">court-ready evidence pack</b> with map, fire table, draft notice & PRANA stub — in under 5 seconds.</p>
+    </div>
+    <div class="glass rounded-2xl p-5 card-shadow hover:-translate-y-1 transition">
+      <div class="w-11 h-11 rounded-xl bg-rose-100 text-rose-600 grid place-items-center mb-3"><span class="material-symbols-outlined">diversity_3</span></div>
+      <h3 class="font-bold text-lg mb-1">Protect</h3>
+      <p class="text-sm text-slate-600">Citizen advisories in <b class="text-ink">English, हिन्दी & मराठी</b> — numbers injected, never hallucinated.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SHOWCASE ===== -->
+<section id="showcase" class="max-w-container mx-auto px-6 py-16 flex flex-col gap-24">
+
+  <!-- block 1 -->
+  <div class="grid lg:grid-cols-2 gap-12 items-center">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-wider text-primary mb-2">Decision support</p>
+      <h3 class="text-3xl font-black tracking-tight mb-4">Not just charts — decisions with a number on them</h3>
+      <p class="text-slate-600 mb-5">Every intervention shows a <b>model-implied ΔAQI range</b> — never a fake point estimate — with an inherited confidence tier, department, legal basis and a one-click <b>Generate order</b>. Confidence is a word, never an invented percentage.</p>
+      <div class="inline-flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
+        <span class="material-symbols-outlined text-emerald">route</span>
+        <span class="text-emerald-800 font-semibold">Dispatch optimiser: +41% enforcement impact, −86 km travel vs a geography-blind plan.</span>
+      </div>
+    </div>
+    <div class="rounded-2xl overflow-hidden glass card-shadow p-2"><img src="docs/screenshots/06-decide.png" alt="Decision support & dispatch" class="rounded-xl w-full"/></div>
+  </div>
+
+  <!-- block 2 (reversed) -->
+  <div class="grid lg:grid-cols-2 gap-12 items-center">
+    <div class="lg:order-2">
+      <p class="text-sm font-semibold uppercase tracking-wider text-primary mb-2">Enforcement evidence</p>
+      <h3 class="text-3xl font-black tracking-tight mb-4">Signal → court-ready evidence in seconds</h3>
+      <p class="text-slate-600 mb-5">A self-contained document — location map, 72-h forecast with prediction interval, source attribution, trailing-7-day fire table with wind-sector lift, a draft enforcement notice and a <b>CPCB PRANA reporting stub</b> — generated on one click, versus days of manual work.</p>
+      <div class="flex gap-3 flex-wrap">
+        <span class="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">⏱ &lt; 5 s generation</span>
+        <span class="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">PRANA-ready</span>
+        <span class="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700">Self-contained HTML/PDF</span>
+      </div>
+    </div>
+    <div class="lg:order-1 rounded-2xl overflow-hidden glass card-shadow p-2"><img src="docs/screenshots/08-evidence.png" alt="Court-ready evidence pack" class="rounded-xl w-full hex-fade" style="max-height:520px;object-fit:cover;object-position:top"/></div>
+  </div>
+
+  <!-- block 3 -->
+  <div class="grid lg:grid-cols-2 gap-12 items-center">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-wider text-primary mb-2">Attribution + forecast</p>
+      <h3 class="text-3xl font-black tracking-tight mb-4">Click any hex. See who's responsible, and what's next.</h3>
+      <p class="text-slate-600 mb-5">A 72-hour observed + forecast curve with an uncertainty band, and a source-attribution donut across five classes with an inherited confidence badge — the meteorology "dispersion effect" shown separately, never smuggled in as a source.</p>
+      <ul class="space-y-2 text-slate-700">
+        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[20px]">check</span>TreeSHAP temporal + spatial ridge + wind-sector lift</li>
+        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[20px]">check</span>Evidence-weighted — not regulatory apportionment (labelled)</li>
+        <li class="flex gap-2"><span class="material-symbols-outlined text-primary text-[20px]">check</span>Prediction intervals from honest rolling-origin backtests</li>
+      </ul>
+    </div>
+    <div class="rounded-2xl overflow-hidden glass card-shadow p-2"><img src="docs/screenshots/02-hexpanel-overview.png" alt="Attribution and forecast panel" class="rounded-xl w-full"/></div>
+  </div>
+</section>
+
+<!-- ===== RESULTS ===== -->
+<section id="results" class="bg-slate-50/70 border-y border-slate-200/60">
+  <div class="max-w-container mx-auto px-6 py-20">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <p class="text-sm font-semibold uppercase tracking-wider text-primary mb-2">Measured, not claimed</p>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tight">Real results on real data</h2>
+    </div>
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="glass rounded-2xl p-6 card-shadow text-center"><div class="text-4xl font-black text-primary">+0.27</div><p class="text-sm text-slate-600 mt-1">peak forecast skill vs persistence (Pune 72 h)</p></div>
+      <div class="glass rounded-2xl p-6 card-shadow text-center"><div class="text-4xl font-black text-emerald">82%</div><p class="text-sm text-slate-600 mt-1">agreement between 2 independent attribution methods</p></div>
+      <div class="glass rounded-2xl p-6 card-shadow text-center"><div class="text-4xl font-black text-violet-600">+41%</div><p class="text-sm text-slate-600 mt-1">enforcement impact vs a geography-blind dispatch</p></div>
+      <div class="glass rounded-2xl p-6 card-shadow text-center"><div class="text-4xl font-black text-amber">&lt; 5 s</div><p class="text-sm text-slate-600 mt-1">from signal to a court-ready evidence pack</p></div>
+    </div>
+    <p class="text-center text-xs text-slate-400 mt-6">Model RMSE ≈ 30 (Delhi) / 22 (Pune) µg/m³ — beats persistence, climatology and CAMS at every horizon. Full backtest in <a class="underline hover:text-primary" href="https://github.com/9SERG4NT/vayunetra/blob/main/docs/metrics.md">docs/metrics.md</a>.</p>
+  </div>
+</section>
+
+<!-- ===== TECH / CREDIBILITY ===== -->
+<section id="tech" class="max-w-container mx-auto px-6 py-20 text-center">
+  <p class="text-sm font-semibold uppercase tracking-wider text-primary mb-3">Built on real public infrastructure</p>
+  <div class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-slate-500 font-semibold mb-8">
+    <span>OpenAQ / CPCB</span><span>·</span><span>NASA FIRMS VIIRS</span><span>·</span>
+    <span>Open-Meteo ERA5 + CAMS</span><span>·</span><span>OpenStreetMap</span>
+  </div>
+  <div class="flex flex-wrap justify-center gap-3">
+    <span class="rounded-full glass px-4 py-2 text-sm font-medium">FastAPI · DuckDB · H3</span>
+    <span class="rounded-full glass px-4 py-2 text-sm font-medium">LightGBM · TreeSHAP</span>
+    <span class="rounded-full glass px-4 py-2 text-sm font-medium">React · MapLibre · deck.gl</span>
+    <span class="rounded-full glass px-4 py-2 text-sm font-medium">28 tests passing</span>
+    <span class="rounded-full glass px-4 py-2 text-sm font-medium">Offline-first</span>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section id="demo" class="max-w-container mx-auto px-6 pb-24">
+  <div class="rounded-3xl bg-gradient-to-br from-primary to-cyan-600 text-white px-8 py-16 text-center card-shadow relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10" style="background-image:radial-gradient(circle at 2px 2px,#fff 1px,transparent 0);background-size:24px 24px"></div>
+    <div class="relative">
+      <h2 class="text-3xl md:text-4xl font-black tracking-tight mb-3">A new city is one YAML block away.</h2>
+      <p class="text-white/90 text-lg mb-8 max-w-xl mx-auto">Delhi and Pune run today. Your city could run tomorrow — no new sensors, no fabricated data.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="https://github.com/9SERG4NT/vayunetra" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white text-primary px-7 py-3.5 font-semibold hover:bg-slate-100 transition">
+          <span class="material-symbols-outlined text-[19px]">code</span> Get the prototype
+        </a>
+        <a href="http://localhost:5173" class="inline-flex items-center justify-center gap-2 rounded-xl bg-white/15 border border-white/40 px-7 py-3.5 font-semibold hover:bg-white/25 transition">
+          Open live demo <span class="material-symbols-outlined text-[19px]">open_in_new</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="border-t border-slate-200/60 glass">
+  <div class="max-w-container mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
+    <div class="flex flex-col items-center md:items-start gap-1">
+      <span class="font-extrabold grad-text text-base">🛰️ VayuNetra</span>
+      <span class="text-slate-400">Urban Air Quality Intelligence · ET AI Hackathon 2.0 · 2026</span>
+    </div>
+    <div class="text-slate-400 text-center md:text-right max-w-md">
+      Data © OpenAQ/CPCB · NASA FIRMS · Open-Meteo/ECMWF · OpenStreetMap · CARTO.
+      Hourly AQI proxy · evidence-weighted attribution, not regulatory source apportionment.
+    </div>
+  </div>
+</footer>
+
+<!-- ===== SHADER SCRIPT ===== -->
+<script>
+(function () {
+  const canvas = document.getElementById('bg-shader');
+  function syncSize() {
+    const w = window.innerWidth, h = window.innerHeight;
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  }
+  syncSize(); window.addEventListener('resize', syncSize);
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) { document.body.style.background = '#f8fafc'; return; }
+  const vs = `attribute vec2 a_position; varying vec2 v; void main(){ v=a_position*0.5+0.5; gl_Position=vec4(a_position,0.0,1.0); }`;
+  const fs = `precision highp float; varying vec2 v; uniform float u_time; uniform vec2 u_res;
+    vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;} vec2 mod289(vec2 x){return x-floor(x*(1.0/289.0))*289.0;}
+    vec3 permute(vec3 x){return mod289(((x*34.0)+1.0)*x);}
+    float snoise(vec2 p){ const vec4 C=vec4(0.211324865405187,0.366025403784439,-0.577350269189626,0.024390243902439);
+      vec2 i=floor(p+dot(p,C.yy)); vec2 x0=p-i+dot(i,C.xx); vec2 i1=(x0.x>x0.y)?vec2(1.0,0.0):vec2(0.0,1.0);
+      vec4 x12=x0.xyxy+C.xxzz; x12.xy-=i1; i=mod289(i);
+      vec3 pp=permute(permute(i.y+vec3(0.0,i1.y,1.0))+i.x+vec3(0.0,i1.x,1.0));
+      vec3 m=max(0.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.0); m=m*m; m=m*m;
+      vec3 x=2.0*fract(pp*C.www)-1.0; vec3 h=abs(x)-0.5; vec3 ox=floor(x+0.5); vec3 a0=x-ox;
+      m*=1.79284291400159-0.85373472095314*(a0*a0+h*h);
+      vec3 g; g.x=a0.x*x0.x+h.x*x0.y; g.yz=a0.yz*x12.xz+h.yz*x12.yw; return 130.0*dot(m,g); }
+    void main(){
+      vec2 uv=v; float aspect=u_res.x/u_res.y; uv.x*=aspect;
+      float n1=snoise(uv*1.6+u_time*0.04);
+      float n2=snoise(uv*3.0-u_time*0.03);
+      vec3 white=vec3(0.98,0.985,1.0);
+      vec3 slate=vec3(0.90,0.93,0.98);
+      vec3 sky=vec3(0.02,0.52,0.78);
+      vec3 col=mix(white,slate,n1*0.5+0.5);
+      col=mix(col,sky,clamp(n2*0.5+0.5,0.0,1.0)*0.06);
+      gl_FragColor=vec4(col,1.0);
+    }`;
+  function mk(t,s){ const sh=gl.createShader(t); gl.shaderSource(sh,s); gl.compileShader(sh); return sh; }
+  const prog=gl.createProgram();
+  gl.attachShader(prog,mk(gl.VERTEX_SHADER,vs)); gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'a_position'); gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const uT=gl.getUniformLocation(prog,'u_time'), uR=gl.getUniformLocation(prog,'u_res');
+  function render(t){ syncSize(); gl.viewport(0,0,canvas.width,canvas.height);
+    gl.uniform1f(uT,t*0.001); gl.uniform2f(uR,canvas.width,canvas.height);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4); requestAnimationFrame(render); }
+  render(0);
+})();
+</script>
+</body>
+</html>
