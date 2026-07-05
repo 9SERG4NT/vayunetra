@@ -47,3 +47,26 @@ def test_vulnerability_shape():
     assert set(body) == {"schools", "hospitals"}
     for layer in body.values():
         assert isinstance(layer, list)
+
+
+def test_refresh_status_shape():
+    # GET only — POST /refresh would trigger a real multi-minute network refresh.
+    r = client.get("/api/refresh")
+    assert r.status_code == 200
+    body = r.json()
+    assert {"running", "started", "finished", "error"} <= set(body)
+    assert isinstance(body["running"], bool)
+
+
+def test_freshness_shape():
+    r = client.get("/api/freshness/delhi")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["city"] == "delhi"
+    assert {"latest", "age_hours", "now"} <= set(body)
+    if body["age_hours"] is not None:
+        assert body["age_hours"] >= 0
+
+
+def test_freshness_unknown_city_404():
+    assert client.get("/api/freshness/atlantis").status_code == 404

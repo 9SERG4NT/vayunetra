@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
         allow_credentials=False,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],  # POST: /refresh, /dispatch, /actions/{city}/order
         allow_headers=["*"],
     )
     app.include_router(router, prefix="/api")

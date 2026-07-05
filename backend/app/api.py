@@ -1,6 +1,9 @@
 """API routes (BUILD_SPEC §11). All reads come from local offline snapshots."""
 from __future__ import annotations
 
+import threading
+from datetime import datetime, timezone
+
 import pandas as pd
 from fastapi import APIRouter, Query
 from fastapi.responses import HTMLResponse, JSONResponse, Response
@@ -21,9 +24,8 @@ def health() -> dict[str, str]:
 
 
 # --- LIVE refresh (BUILD_SPEC §1.4 / decision layer) ------------------------
-import threading  # noqa: E402
-from datetime import datetime, timezone  # noqa: E402
-
+# NOTE: refresh_live itself holds the cross-trigger lock + min-interval guard
+# (scripts/run_pipeline.py), so concurrent POSTs / scheduler overlap are safe.
 _refresh = {"running": False, "started": None, "finished": None, "result": None, "error": None}
 
 

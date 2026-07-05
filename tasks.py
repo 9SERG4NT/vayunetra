@@ -39,11 +39,11 @@ def main() -> int:
         stage = "all" if target == "pipeline" else target
         return sh(["uv", "run", "python", "scripts/run_pipeline.py", stage, "--cities", *cities])
     if target == "api":
-        return sh(["uv", "run", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"])
+        return sh(["uv", "run", "uvicorn", "backend.app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"])
     if target == "ui":
         return sh(["npm", "run", "dev"], cwd=ROOT / "frontend")
     if target == "demo":
-        api = subprocess.Popen(["uv", "run", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"], cwd=str(ROOT))
+        api = subprocess.Popen(["uv", "run", "uvicorn", "backend.app.main:app", "--host", "127.0.0.1", "--port", "8000"], cwd=str(ROOT))
         try:
             sh(["npm", "run", "dev"], cwd=ROOT / "frontend")
         finally:

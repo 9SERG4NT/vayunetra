@@ -56,14 +56,14 @@ pipeline:
 	$(PY) scripts/run_pipeline.py all --cities $(CITIES)
 
 api:
-	uv run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+	uv run uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 
 ui:
 	cd frontend && npm run dev
 
 demo:
 	@echo "Starting API (:8000) and UI (:5173). Ctrl-C to stop both."
-	uv run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 & echo $$! > .api.pid; \
+	uv run uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 & echo $$! > .api.pid; \
 	cd frontend && npm run dev; \
 	kill `cat ../.api.pid` 2>/dev/null; rm -f ../.api.pid
 

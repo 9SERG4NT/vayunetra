@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 
+// Give up polling after this long — if the backend died mid-refresh the status
+// endpoint would report running=true forever and the spinner would never stop.
+const POLL_DEADLINE_MS = 15 * 60 * 1000;
+
 export default function LiveStatus({ city, onRefreshed }: { city: string; onRefreshed?: () => void }) {
   const [age, setAge] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
@@ -14,19 +18,25 @@ export default function LiveStatus({ city, onRefreshed }: { city: string; onRefr
     loadFreshness();
   }, [loadFreshness]);
 
+  // Stop polling when the component unmounts (route change / HMR) so the
+  // interval doesn't keep firing against an unmounted component.
+  useEffect(() => () => window.clearInterval(poll.current), []);
+
   const refresh = async () => {
     if (running) return;
     setRunning(true);
     await api.refreshNow().catch(() => {});
     // poll until the background refresh finishes, then reload everything
+    const startedAt = Date.now();
     window.clearInterval(poll.current);
     poll.current = window.setInterval(async () => {
       const s = await api.refreshStatus().catch(() => null);
-      if (s && !s.running) {
+      const timedOut = Date.now() - startedAt > POLL_DEADLINE_MS;
+      if ((s && !s.running) || timedOut) {
         window.clearInterval(poll.current);
         setRunning(false);
         loadFreshness();
-        onRefreshed?.();
+        if (!timedOut) onRefreshed?.();
       }
     }, 3000);
   };

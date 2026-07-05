@@ -149,6 +149,7 @@ def _summarize(routes: list[list[dict]], depot) -> tuple[float, float, int]:
 
 def dispatch(city: str, inspectors: int = 10, shift_hours: float = 8.0) -> dict:
     inspectors = int(np.clip(inspectors, 1, 50))
+    shift_hours = float(np.clip(shift_hours, 1.0, 24.0))  # 0 would divide-by-zero in utilisation
     depot = _depot(city)
     cands = _candidates(city)
     opt = _greedy(cands, inspectors, depot, shift_hours)

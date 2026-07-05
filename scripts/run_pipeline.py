@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -132,7 +133,17 @@ def stage_data_latest(cities: list[str]) -> None:
         ingest_fires(city, latest=True)
 
 
-def refresh_live(cities: list[str] | None = None) -> dict:
+# Single funnel for ALL refresh triggers (API thread, APScheduler, CLI): a
+# non-blocking lock prevents two refreshes from interleaving writes to the same
+# snapshot files, and a min-interval guard stops trigger spam from burning
+# upstream API quota. Every path goes through refresh_live, so both are enforced
+# regardless of who initiated the refresh.
+_refresh_lock = threading.Lock()
+_last_refresh_done = [0.0]
+MIN_REFRESH_INTERVAL_S = 600  # 10 min between completed refreshes
+
+
+def refresh_live(cities: list[str] | None = None, force: bool = False) -> dict:
     """LIVE refresh (hourly APScheduler hook / manual trigger): latest-only ingest,
     then re-derive features -> predict -> attribution -> actions. Returns freshness info.
     """
@@ -140,21 +151,34 @@ def refresh_live(cities: list[str] | None = None) -> dict:
     from backend.app import deps as _deps
     from backend.config import load_cities
 
-    if cities is None:
-        cities = list(load_cities().keys())
-    log.info("LIVE refresh for cities: %s", cities)
-    t0 = time.time()
-    stage_data_latest(cities)
-    stage_features(cities)
-    stage_predict(cities)
-    stage_attribution(cities)
-    stage_actions(cities)
-    # invalidate API caches so the refreshed snapshots are served immediately
-    _deps.read_parquet.cache_clear() if hasattr(_deps.read_parquet, "cache_clear") else None
-    _deps._cached_parquet.cache_clear()
-    _sim.clear_cache()
-    log.info("LIVE refresh done in %.1fs", time.time() - t0)
-    return {"cities": cities, "seconds": round(time.time() - t0, 1)}
+    if not _refresh_lock.acquire(blocking=False):
+        log.info("LIVE refresh skipped: another refresh is already running")
+        return {"skipped": "already_running"}
+    try:
+        since_last = time.time() - _last_refresh_done[0]
+        if not force and since_last < MIN_REFRESH_INTERVAL_S:
+            wait = round(MIN_REFRESH_INTERVAL_S - since_last)
+            log.info("LIVE refresh skipped: last refresh %.0fs ago (min interval %ds)",
+                     since_last, MIN_REFRESH_INTERVAL_S)
+            return {"skipped": "too_soon", "retry_after_s": wait}
+
+        if cities is None:
+            cities = list(load_cities().keys())
+        log.info("LIVE refresh for cities: %s", cities)
+        t0 = time.time()
+        stage_data_latest(cities)
+        stage_features(cities)
+        stage_predict(cities)
+        stage_attribution(cities)
+        stage_actions(cities)
+        # invalidate API caches so the refreshed snapshots are served immediately
+        _deps._cached_parquet.cache_clear()
+        _sim.clear_cache()
+        _last_refresh_done[0] = time.time()
+        log.info("LIVE refresh done in %.1fs", time.time() - t0)
+        return {"cities": cities, "seconds": round(time.time() - t0, 1)}
+    finally:
+        _refresh_lock.release()
 
 
 def main() -> None:
