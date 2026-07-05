@@ -38,17 +38,17 @@ export default function App() {
   return (
     <div className="flex h-full flex-col bg-slate-50">
       <header className="flex items-center gap-5 border-b border-slate-200 bg-white px-5 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-        <div className="flex items-baseline gap-2.5">
+        <a href="/" className="flex items-baseline gap-2.5" title="Back to landing page">
           <span className="text-lg font-bold tracking-tight text-sky-600">VayuNetra</span>
           <span className="hidden text-xs font-medium text-slate-400 sm:inline">
             Urban Air Quality Intelligence
           </span>
-        </div>
+        </a>
         <nav className="flex gap-1">
-          <NavLink to="/" end className={navClass}>Command</NavLink>
-          <NavLink to="/actions" className={navClass}>Actions</NavLink>
-          <NavLink to="/decide" className={navClass}>Decide</NavLink>
-          <NavLink to="/metrics" className={navClass}>Metrics</NavLink>
+          <NavLink to="/app" end className={navClass}>Command</NavLink>
+          <NavLink to="/app/actions" className={navClass}>Actions</NavLink>
+          <NavLink to="/app/decide" className={navClass}>Decide</NavLink>
+          <NavLink to="/app/metrics" className={navClass}>Metrics</NavLink>
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <LiveStatus city={city} onRefreshed={() => { setRefreshKey((k) => k + 1); api.grap(city).then(setGrap).catch(() => setGrap(null)); }} />
@@ -58,10 +58,10 @@ export default function App() {
       </header>
       <main className="min-h-0 flex-1">
         <Routes>
-          <Route path="/" element={<CommandPage key={refreshKey} city={city} cityInfo={cityInfo} />} />
-          <Route path="/actions" element={<ActionsPage key={refreshKey} city={city} />} />
-          <Route path="/decide" element={<DecidePage key={refreshKey} city={city} cityInfo={cityInfo} />} />
-          <Route path="/metrics" element={<MetricsPage key={refreshKey} city={city} />} />
+          <Route index element={<CommandPage key={refreshKey} city={city} cityInfo={cityInfo} />} />
+          <Route path="actions" element={<ActionsPage key={refreshKey} city={city} />} />
+          <Route path="decide" element={<DecidePage key={refreshKey} city={city} cityInfo={cityInfo} />} />
+          <Route path="metrics" element={<MetricsPage key={refreshKey} city={city} />} />
         </Routes>
       </main>
     </div>
