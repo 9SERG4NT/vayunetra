@@ -118,20 +118,43 @@ def run_all(cities: list[str]) -> None:
     stage_validate(cities)
 
 
-def refresh_live() -> None:
-    """Hourly refresh hook used by APScheduler when LIVE_MODE=1.
+def stage_data_latest(cities: list[str]) -> None:
+    """LIVE ingest: recent-only OpenAQ + forecast met + NRT fires (no S3/archive pull)."""
+    from backend.config import require_env_or_halt
+    from backend.ingest.firms import ingest_fires
+    from backend.ingest.meteo import ingest_meteo
+    from backend.ingest.openaq import ingest_latest
 
-    Re-ingests latest-only data, then re-derives features/predictions/attribution/actions.
+    require_env_or_halt()
+    for city in cities:
+        ingest_latest(city)
+        ingest_meteo(city, latest=True)
+        ingest_fires(city, latest=True)
+
+
+def refresh_live(cities: list[str] | None = None) -> dict:
+    """LIVE refresh (hourly APScheduler hook / manual trigger): latest-only ingest,
+    then re-derive features -> predict -> attribution -> actions. Returns freshness info.
     """
+    from backend.actions import simulate as _sim
+    from backend.app import deps as _deps
     from backend.config import load_cities
 
-    cities = list(load_cities().keys())
+    if cities is None:
+        cities = list(load_cities().keys())
     log.info("LIVE refresh for cities: %s", cities)
-    stage_data(cities)
+    t0 = time.time()
+    stage_data_latest(cities)
     stage_features(cities)
     stage_predict(cities)
     stage_attribution(cities)
     stage_actions(cities)
+    # invalidate API caches so the refreshed snapshots are served immediately
+    _deps.read_parquet.cache_clear() if hasattr(_deps.read_parquet, "cache_clear") else None
+    _deps._cached_parquet.cache_clear()
+    _sim.clear_cache()
+    log.info("LIVE refresh done in %.1fs", time.time() - t0)
+    return {"cities": cities, "seconds": round(time.time() - t0, 1)}
 
 
 def main() -> None:

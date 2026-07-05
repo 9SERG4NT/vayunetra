@@ -10,7 +10,7 @@ from backend.app.schemas import (
     ActionsResponse, AttributionResponse, City, ForecastResponse, GridResponse,
     OrderRequest, SimulateRequest, TimelineResponse,
 )
-from backend.config import city_config, load_cities, load_interventions
+from backend.config import city_config, load_cities, settings, load_interventions
 
 router = APIRouter()
 
@@ -18,6 +18,53 @@ router = APIRouter()
 @router.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# --- LIVE refresh (BUILD_SPEC §1.4 / decision layer) ------------------------
+import threading  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+
+_refresh = {"running": False, "started": None, "finished": None, "result": None, "error": None}
+
+
+def _run_refresh():
+    from scripts.run_pipeline import refresh_live
+    try:
+        _refresh["result"] = refresh_live()
+        _refresh["error"] = None
+    except Exception as exc:  # noqa: BLE001
+        _refresh["error"] = str(exc)
+    finally:
+        _refresh["running"] = False
+        _refresh["finished"] = datetime.now(timezone.utc).isoformat()
+
+
+@router.post("/refresh")
+def refresh_now():
+    """Trigger a LIVE data refresh (latest-only ingest + re-derive) in the background."""
+    if _refresh["running"]:
+        return {"status": "already_running", "started": _refresh["started"]}
+    _refresh.update(running=True, started=datetime.now(timezone.utc).isoformat(), error=None)
+    threading.Thread(target=_run_refresh, daemon=True).start()
+    return {"status": "started", "started": _refresh["started"]}
+
+
+@router.get("/refresh")
+def refresh_status():
+    return _refresh
+
+
+@router.get("/freshness/{city}")
+def freshness(city: str):
+    deps.validate_city(city)
+    nc = _nowcast(city)
+    now = pd.Timestamp.now(tz="UTC")
+    if nc.empty:
+        return {"city": city, "latest": None, "age_hours": None, "now": now.isoformat()}
+    latest = nc["ts_utc"].max()
+    return {"city": city, "latest": latest.isoformat(),
+            "age_hours": round((now - latest).total_seconds() / 3600, 1),
+            "now": now.isoformat(), "live_mode": settings.live_mode}
 
 
 def _nowcast(city: str) -> pd.DataFrame:

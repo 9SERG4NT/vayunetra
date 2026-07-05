@@ -88,17 +88,25 @@ def _add_wind_vectors(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def ingest_meteo(city: str) -> dict[str, int]:
-    """Fetch met (archive + forecast) and CAMS for a city; persist parquet."""
+def ingest_meteo(city: str, latest: bool = False) -> dict[str, int]:
+    """Fetch met and CAMS for a city; persist parquet.
+
+    latest=False: full ERA5 archive + forecast (initial build).
+    latest=True:  forecast-only (past_days=7 + 4-day forecast), merged into existing
+                  met.parquet — the fast LIVE refresh path (no multi-month archive pull).
+    """
     today = dt.date.today().isoformat()
     points = met_points(city)
     met_frames, cams_frames = [], []
 
     for pid, lat, lng in points:
-        arch = _fetch_met(ARCHIVE_URL, lat, lng,
-                          {"start_date": settings.history_start, "end_date": today})
-        fcst = _fetch_met(FORECAST_URL, lat, lng, {"forecast_days": 4, "past_days": 7})
-        met = pd.concat([arch, fcst], ignore_index=True)
+        if latest:
+            met = _fetch_met(FORECAST_URL, lat, lng, {"forecast_days": 4, "past_days": 7})
+        else:
+            arch = _fetch_met(ARCHIVE_URL, lat, lng,
+                              {"start_date": settings.history_start, "end_date": today})
+            fcst = _fetch_met(FORECAST_URL, lat, lng, {"forecast_days": 4, "past_days": 7})
+            met = pd.concat([arch, fcst], ignore_index=True)
         if not met.empty:
             met = met.drop_duplicates(subset="ts_utc", keep="first")
             met.insert(0, "point_id", pid)
@@ -120,9 +128,15 @@ def ingest_meteo(city: str) -> dict[str, int]:
     cams_all = pd.concat(cams_frames, ignore_index=True) if cams_frames else pd.DataFrame()
 
     sdir = snap_dir(city)
+    if latest and (sdir / "met.parquet").exists() and not met_all.empty:
+        prev = pd.read_parquet(sdir / "met.parquet")
+        prev["ts_utc"] = pd.to_datetime(prev["ts_utc"], utc=True)
+        met_all = (pd.concat([prev, met_all], ignore_index=True)
+                   .drop_duplicates(subset=["point_id", "ts_utc"], keep="last"))
     met_all.to_parquet(sdir / "met.parquet", index=False)
     cams_all.to_parquet(sdir / "cams.parquet", index=False)
-    log.info("[%s] met rows=%d cams rows=%d (points=%d)", city, len(met_all), len(cams_all), len(points))
+    log.info("[%s] met rows=%d cams rows=%d (points=%d, latest=%s)",
+             city, len(met_all), len(cams_all), len(points), latest)
     return {"met_rows": len(met_all), "cams_rows": len(cams_all)}
 
 

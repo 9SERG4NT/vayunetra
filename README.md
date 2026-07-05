@@ -153,6 +153,9 @@ Open-Meteo and OpenStreetMap need no key. Optional: `DATA_GOV_IN_API_KEY`, `LLM_
 
 Hourly live refresh uses **<1%** of every limit; best achievable freshness ≈ 1 h (CPCB stations report hourly).
 
+### Real-time mode
+Set `LIVE_MODE=1` in `.env` and the API schedules an **hourly latest-only refresh** (APScheduler) — pulling recent readings via the OpenAQ `/hours` API + FIRMS NRT + Open-Meteo forecast, merging them into the snapshots and re-deriving features → forecast → attribution → actions. A **Refresh** button in the app header triggers it on demand (`POST /api/refresh`), and `GET /api/freshness/{city}` reports how old the data is. Offline-first still holds — the UI always serves the latest local snapshot.
+
 ---
 
 ## 🧪 Tech stack & quality

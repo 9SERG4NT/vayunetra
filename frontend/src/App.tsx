@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import CityToggle from "./components/CityToggle";
 import GrapChip from "./components/GrapChip";
+import LiveStatus from "./components/LiveStatus";
 import CommandPage from "./pages/CommandPage";
 import ActionsPage from "./pages/ActionsPage";
 import DecidePage from "./pages/DecidePage";
@@ -13,6 +14,7 @@ export default function App() {
   const [cities, setCities] = useState<CityInfo[]>([]);
   const [city, setCity] = useState<string>("delhi");
   const [grap, setGrap] = useState<GrapStatus | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     api.cities().then((cs) => {
@@ -49,16 +51,17 @@ export default function App() {
           <NavLink to="/metrics" className={navClass}>Metrics</NavLink>
         </nav>
         <div className="ml-auto flex items-center gap-3">
+          <LiveStatus city={city} onRefreshed={() => { setRefreshKey((k) => k + 1); api.grap(city).then(setGrap).catch(() => setGrap(null)); }} />
           {cityInfo?.grap && <GrapChip grap={grap} />}
           <CityToggle cities={cities} active={city} onChange={setCity} />
         </div>
       </header>
       <main className="min-h-0 flex-1">
         <Routes>
-          <Route path="/" element={<CommandPage city={city} cityInfo={cityInfo} />} />
-          <Route path="/actions" element={<ActionsPage city={city} />} />
-          <Route path="/decide" element={<DecidePage city={city} cityInfo={cityInfo} />} />
-          <Route path="/metrics" element={<MetricsPage city={city} />} />
+          <Route path="/" element={<CommandPage key={refreshKey} city={city} cityInfo={cityInfo} />} />
+          <Route path="/actions" element={<ActionsPage key={refreshKey} city={city} />} />
+          <Route path="/decide" element={<DecidePage key={refreshKey} city={city} cityInfo={cityInfo} />} />
+          <Route path="/metrics" element={<MetricsPage key={refreshKey} city={city} />} />
         </Routes>
       </main>
     </div>

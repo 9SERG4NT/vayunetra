@@ -292,6 +292,70 @@ def ingest_measurements(city: str) -> dict[str, int]:
     return {"stations": len(stations), "rows": len(measurements)}
 
 
+# --- live (latest-only) path ----------------------------------------------
+def _api_sensor_recent(sensor_id: int, parameter: str, station: Station, days: int) -> pd.DataFrame:
+    """Fetch the last `days` of hourly values for one sensor via the v3 API (not S3)."""
+    now = dt.datetime.now(dt.timezone.utc)
+    frm = (now - dt.timedelta(days=days)).strftime("%Y-%m-%dT%H:00:00Z")
+    to = now.strftime("%Y-%m-%dT%H:00:00Z")
+    rows, endpoint, page = [], "hours", 1
+    while True:
+        try:
+            data = _get(f"/sensors/{sensor_id}/{endpoint}",
+                        {"datetime_from": frm, "datetime_to": to, "limit": 1000, "page": page})
+        except HttpError as exc:
+            if endpoint == "hours" and "404" in str(exc):
+                endpoint, page = "measurements", 1
+                continue
+            log.warning("sensor %s recent failed: %s", sensor_id, exc)
+            break
+        results = data.get("results", [])
+        for r in results:
+            ts = ((r.get("period") or {}).get("datetimeFrom") or {}).get("utc") or \
+                 ((r.get("date") or {}).get("utc"))
+            rows.append({"ts_utc": ts, "value": r.get("value")})
+        if len(results) < 1000:
+            break
+        page += 1
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    df["ts_utc"] = pd.to_datetime(df["ts_utc"], utc=True, errors="coerce")
+    df["value"] = pd.to_numeric(df["value"], errors="coerce")
+    df["parameter"] = parameter
+    df["station_id"], df["station_name"] = station.id, station.name
+    df["lat"], df["lng"] = station.lat, station.lng
+    return df
+
+
+def ingest_latest(city: str, days: int = 4) -> dict[str, int]:
+    """LIVE refresh: pull the last few days of hourly readings from the API and merge
+    them into measurements.parquet (keeping newest). Advances the data to ~1 h behind
+    real time without re-downloading the multi-month S3 archive.
+    """
+    stations = discover_stations(city)
+    frames = [_api_sensor_recent(sen["id"], sen["parameter"], st, days)
+              for st in stations for sen in st.sensors]
+    recent = _clean(_to_hourly(pd.concat([f for f in frames if not f.empty], ignore_index=True)
+                               if any(not f.empty for f in frames) else pd.DataFrame()))
+    sdir = snap_dir(city)
+    path = sdir / "measurements.parquet"
+    existing = pd.read_parquet(path) if path.exists() else pd.DataFrame()
+    if not existing.empty:
+        existing["ts_utc"] = pd.to_datetime(existing["ts_utc"], utc=True)
+    merged = pd.concat([existing, recent], ignore_index=True)
+    if not merged.empty:
+        merged = merged.drop_duplicates(subset=["ts_utc", "station_id", "parameter"], keep="last")
+        merged = merged.sort_values(["station_id", "parameter", "ts_utc"])
+    merged.to_parquet(path, index=False)
+    fetch_latest(stations).to_parquet(sdir / "latest.parquet", index=False)
+
+    added = len(merged) - len(existing)
+    newest = merged["ts_utc"].max() if not merged.empty else None
+    log.info("[%s] LIVE refresh: +%d rows, newest=%s", city, max(added, 0), newest)
+    return {"added": max(added, 0), "total": len(merged)}
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     for c in ("delhi", "pune"):

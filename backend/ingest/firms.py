@@ -14,7 +14,7 @@ import logging
 
 import pandas as pd
 
-from backend.config import city_config, raw_dir, settings, snap_dir
+from backend.config import city_config, settings, snap_dir
 from backend.degrade import log_degradation
 from backend.ingest.http import HttpError, get_text
 
@@ -58,43 +58,52 @@ def _build_ts(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def ingest_fires(city: str) -> dict[str, int]:
-    """Pull archive + NRT fires for a city's upwind bbox; persist fires.parquet."""
+def ingest_fires(city: str, latest: bool = False) -> dict[str, int]:
+    """Pull fires for a city's upwind bbox; persist fires.parquet.
+
+    latest=False: full SP archive + NRT tail (initial build).
+    latest=True:  NRT tail only (last 10 days), merged into existing fires.parquet — LIVE path.
+    """
     cfg = city_config(city)
     bbox = cfg["fires_bbox"]
-    start = dt.date.fromisoformat(settings.history_start)
     today = dt.date.today()
 
     frames: list[pd.DataFrame] = []
-    for start_date, span in _date_chunks(start, today):
-        try:
-            frames.append(_fetch_csv("VIIRS_SNPP_SP", bbox, start_date, span))
-        except HttpError as exc:
-            log.warning("[%s] FIRMS SP %s/%d failed: %s", city, start_date, span, exc)
-    # Recent tail (last 20 days) from NRT — archive lags real time.
-    for start_date, span in _date_chunks(today - dt.timedelta(days=20), today):
+    if not latest:
+        for start_date, span in _date_chunks(dt.date.fromisoformat(settings.history_start), today):
+            try:
+                frames.append(_fetch_csv("VIIRS_SNPP_SP", bbox, start_date, span))
+            except HttpError as exc:
+                log.warning("[%s] FIRMS SP %s/%d failed: %s", city, start_date, span, exc)
+    # NRT tail — archive lags real time (10 days for live, 20 for full build).
+    tail_days = 10 if latest else 20
+    for start_date, span in _date_chunks(today - dt.timedelta(days=tail_days), today):
         try:
             frames.append(_fetch_csv("VIIRS_NOAA20_NRT", bbox, start_date, span))
         except HttpError as exc:
             log.warning("[%s] FIRMS NRT %s/%d failed: %s", city, start_date, span, exc)
 
+    path = snap_dir(city) / "fires.parquet"
     if not frames:
-        log_degradation("firms", f"[{city}] no fire data retrieved (check FIRMS_MAP_KEY).")
-        fires = pd.DataFrame(columns=["ts_utc", "lat", "lng", "frp", "confidence", "satellite"])
-        fires.to_parquet(snap_dir(city) / "fires.parquet", index=False)
+        if not latest:
+            log_degradation("firms", f"[{city}] no fire data retrieved (check FIRMS_MAP_KEY).")
+            pd.DataFrame(columns=["ts_utc", "lat", "lng", "frp", "confidence", "satellite"]).to_parquet(path, index=False)
         return {"rows": 0}
 
     raw = pd.concat(frames, ignore_index=True)
-    (raw_dir(city) / "firms_raw.csv").write_text(raw.to_csv(index=False), encoding="utf-8")
-
     fires = _build_ts(raw).dropna(subset=["ts_utc"])
     if "confidence" in fires.columns and fires["confidence"].dtype == object:
         fires = fires[fires["confidence"].astype(str).str.lower() != "l"]
     fires = fires.rename(columns={"latitude": "lat", "longitude": "lng"})
     fires = fires[["ts_utc", "lat", "lng", "frp", "confidence", "satellite"]].drop_duplicates()
 
-    fires.to_parquet(snap_dir(city) / "fires.parquet", index=False)
-    log.info("[%s] fires rows=%d (bbox=%s)", city, len(fires), bbox)
+    if latest and path.exists():
+        prev = pd.read_parquet(path)
+        prev["ts_utc"] = pd.to_datetime(prev["ts_utc"], utc=True)
+        fires = pd.concat([prev, fires], ignore_index=True).drop_duplicates(
+            subset=["ts_utc", "lat", "lng", "frp"])
+    fires.to_parquet(path, index=False)
+    log.info("[%s] fires rows=%d (bbox=%s, latest=%s)", city, len(fires), bbox, latest)
     return {"rows": len(fires)}
 
 

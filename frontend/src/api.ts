@@ -55,4 +55,13 @@ export const api = {
     }),
   orderUrl: (city: string, hex: string, intervention: string) =>
     `${BASE}/order/${city}?hex=${hex}&intervention=${intervention}`,
+
+  // --- Live refresh ---
+  freshness: (city: string) =>
+    get<{ city: string; latest: string | null; age_hours: number | null; now: string; live_mode?: boolean }>(
+      `/freshness/${city}`
+    ),
+  refreshStatus: () =>
+    get<{ running: boolean; started: string | null; finished: string | null; error: string | null }>("/refresh"),
+  refreshNow: () => post<{ status: string; started: string | null }>("/refresh", {}),
 };
